@@ -55,6 +55,8 @@ public:
 	void btnCancelClick(Action *action);
 	/// Handler for pressing/releasing CTRL.
 	void toggleCancel(Action *action);
+
+	virtual void init();
 };
 
 }

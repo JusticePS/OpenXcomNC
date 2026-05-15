@@ -106,6 +106,7 @@ private:
 	std::vector<VehicleDeploymentData> _customVehicleDeployment;
 	int _skinIndex;
 	ScriptValues<Craft> _scriptValues;
+	int64_t _twitchPilotId;
 
 	void recalcSpeedMaxRadian();
 
@@ -335,6 +336,16 @@ public:
 	void setSkinIndex(int skinIndex) { _skinIndex = skinIndex; }
 	/// Gets the craft's skin sprite ID.
 	int getSkinSprite() const;
+	/// Sets twitch pilot ID
+	void setTwitchPilot(int64_t id)
+	{
+		_twitchPilotId = id;
+	}
+	/// Gets twitch pilot id
+	int64_t getTwitchPilot()const
+	{
+		return _twitchPilotId;
+	}
 
 	/// Gets the craft's custom deployment of soldiers.
 	std::map<int, SoldierDeploymentData>& getCustomSoldierDeployment() { return _customSoldierDeployment; };

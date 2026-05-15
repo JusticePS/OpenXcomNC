@@ -134,6 +134,7 @@
 #include "../Mod/Texture.h"
 #include "../fmath.h"
 #include "../fallthrough.h"
+#include "../Engine/NetControl.h"
 
 namespace OpenXcom
 {
@@ -146,6 +147,8 @@ GeoscapeState::GeoscapeState() : _pause(false), _zoomInEffectDone(false), _zoomO
 {
 	int screenWidth = Options::baseXGeoscape;
 	int screenHeight = Options::baseYGeoscape;
+
+	_game->getNetControl()->geoscape = this;
 
 	// Create objects
 	Surface *hd = _game->getMod()->getSurface("ALTGEOBORD.SCR");
@@ -492,6 +495,11 @@ GeoscapeState::~GeoscapeState()
 	delete _dogfightStartTimer;
 	delete _dogfightTimer;
 
+    if (_game != nullptr && _game->getNetControl() != nullptr && _game->getNetControl()->geoscape == this)
+	{
+		_game->getNetControl()->geoscape = nullptr;
+	}
+
 	for (auto* dfs : _dogfights)
 	{
 		delete dfs;
@@ -786,6 +794,8 @@ void GeoscapeState::think()
 		if (!_popups.empty())
 		{
 			// Handle popups
+			//TODO - Justice: send popup notice to bot.  This should probably be in State::Init, though (that requires touching all the popup states
+			//but will make sending specific messages and button references per state easier)
 			_globe->rotateStop();
 			_game->pushState(_popups.front());
 			_popups.erase(_popups.begin());
@@ -2914,6 +2924,72 @@ void GeoscapeState::timerReset()
 	ev.button.button = SDL_BUTTON_LEFT;
 	Action act(&ev, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand());
 	_btn5Secs->mousePress(&act, this);
+}
+
+void GeoscapeState::increaseSpeed()
+{
+	TextButton* buttonToPress = nullptr;
+	if (_timeSpeed == _btn5Secs)
+	{
+		buttonToPress = _btn1Min;
+	}
+	else if (_timeSpeed == _btn1Min)
+	{
+		buttonToPress = _btn5Mins;
+	}
+	else if (_timeSpeed == _btn5Mins)
+	{
+		buttonToPress = _btn30Mins;
+	}
+	else if (_timeSpeed == _btn30Mins)
+	{
+		buttonToPress = _btn1Hour;
+	}
+	else if (_timeSpeed == _btn1Hour)
+	{
+		buttonToPress = _btn1Day;
+	}
+
+	if (buttonToPress != nullptr)
+	{
+		SDL_Event ev;
+		ev.button.button = SDL_BUTTON_LEFT;
+		Action act(&ev, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand());
+		buttonToPress->mousePress(&act, this);
+	}
+}
+
+void GeoscapeState::decreaseSpeed()
+{
+	TextButton* buttonToPress = nullptr;
+	if (_timeSpeed == _btn1Min)
+	{
+		buttonToPress = _btn5Secs;
+	}
+	else if (_timeSpeed == _btn5Mins)
+	{
+		buttonToPress = _btn1Min;
+	}
+	else if (_timeSpeed == _btn30Mins)
+	{
+		buttonToPress = _btn5Mins;
+	}
+	else if (_timeSpeed == _btn1Hour)
+	{
+		buttonToPress = _btn30Mins;
+	}
+	else if (_timeSpeed == _btn1Day)
+	{
+		buttonToPress = _btn1Hour;
+	}
+
+	if (buttonToPress != nullptr)
+	{
+		SDL_Event ev;
+		ev.button.button = SDL_BUTTON_LEFT;
+		Action act(&ev, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand());
+		buttonToPress->mousePress(&act, this);
+	}
 }
 
 /**

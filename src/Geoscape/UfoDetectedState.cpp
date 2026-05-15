@@ -35,6 +35,10 @@
 #include "../Savegame/AlienMission.h"
 #include "InterceptState.h"
 #include "../Mod/RuleCraft.h"
+#include "../Engine/NetControl_Packets.h"
+#include "../Engine/NetControl.h"
+#include "../Savegame/Base.h"
+#include <string>
 
 namespace OpenXcom
 {
@@ -50,6 +54,7 @@ namespace OpenXcom
 UfoDetectedState::UfoDetectedState(Ufo *ufo, GeoscapeState *state, bool detected, bool hyperwave) : _ufo(ufo), _state(state)
 {
 	// Generate UFO ID
+	_game->getNetControl()->detectionState = this;
 	if (_ufo->getId() == 0)
 	{
 		_ufo->setId(_game->getSavedGame()->getId("STR_UFO"));
@@ -272,6 +277,48 @@ void UfoDetectedState::toggleCancel(Action *)
 	else
 	{
 		_btnCancel->setText(tr("STR_CANCEL_UC"));
+	}
+}
+
+/**
+ * Sends information about the available interceptors via NetControl so they can be selected
+ */
+void UfoDetectedState::init()
+{
+	State::init();
+	//TODO - Justice: Actually, I think this interceptor stuff should be sent separately?  Like, with an explicit attack command?  Maybe not.
+	//Maybe better to send here and allow immediate attack or wait and see without another prompt. But showing the interception window
+	//should be a thing?
+	//TODO - Justice: Sort by range to UFO
+	NetControlPackets::NetControl_UFODetected detectPacket;
+	detectPacket.ufo_id = _ufo->getId();
+
+	auto* bases = _game->getSavedGame()->getBases();
+	int interceptorIndex = 0;
+	if (bases != nullptr)
+	{
+		for (auto iter = bases->begin(); iter != bases->end(); ++iter)
+		{
+			auto* crafts = (*iter)->getCrafts();
+			if (crafts != nullptr)
+			{
+				for (auto craftIter = crafts->begin(); craftIter != crafts->end() && NetControlPackets::NetControl_UFODetected::max_interceptors > interceptorIndex; ++craftIter)
+				{
+					auto c = (*craftIter);
+					if (c->getStatus() == "STR_READY" || ((c->getStatus() == "STR_OUT" || Options::craftLaunchAlways) && !c->getLowFuel() && !c->getMissionComplete()))
+					{
+						CraftId craftId = c->getUniqueId();
+						auto hash = std::hash<std::string>{}(std::string(craftId.first)) + craftId.second;
+						detectPacket.interceptorIds[interceptorIndex] = hash;
+						std::string name = c->getName(_game->getLanguage());
+						strncpy_s(detectPacket.interceptorNames[interceptorIndex].name, name.c_str(), name.length());
+						++interceptorIndex;
+					}
+				}
+			}
+		}
+		detectPacket.interceptorCount = interceptorIndex;
+		_game->getNetControl()->SendPacketBot(&detectPacket, sizeof(detectPacket));
 	}
 }
 

@@ -107,6 +107,10 @@ public:
 	void time1Month();
 	/// Resets the timer to minimum speed.
 	void timerReset();
+	// modifies timer speed
+	void increaseSpeed();
+	// modifies timer speed
+	void decreaseSpeed();
 	/// Displays a popup window.
 	void popup(State *state);
 	/// Gets the Geoscape globe.

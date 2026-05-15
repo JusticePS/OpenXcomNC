@@ -68,6 +68,7 @@
 #include "ResearchDiary.h"
 #include "../Mod/AlienRace.h"
 #include "RankCount.h"
+#include "TwitchPilot.h"
 
 namespace OpenXcom
 {
@@ -148,6 +149,11 @@ SavedGame::~SavedGame()
 		delete xbase;
 	}
 	delete _previewBase;
+	for (auto* pilot : _twitchPilots)
+	{
+		delete pilot;
+	}
+	TwitchPilot::last_id = 0;
 	for (auto* ufo : _ufos)
 	{
 		delete ufo;
@@ -616,6 +622,14 @@ void SavedGame::load(const std::string &filename, Mod *mod, Language *lang)
 		_bases.push_back(b);
 	}
 
+	// load Twitch pilots
+	for (const auto& pilot : reader["twitchPilots"].children())
+	{
+		TwitchPilot* tp = new TwitchPilot();
+		tp->load(pilot);
+		_twitchPilots.push_back(tp);
+	}
+
 	// Finish loading crafts after bases (more specifically after all crafts) are loaded, because of references between crafts (i.e. friendly escorts)
 	for (size_t i = 0; i < _bases.size(); ++i)
 		_bases[i]->finishLoading(reader["bases"][i], this);
@@ -820,6 +834,7 @@ void SavedGame::save(const std::string &filename, Mod *mod) const
 	saveVector(writer, _countries, "countries", mod->getScriptGlobal());
 	saveVector(writer, _regions, "regions");
 	saveVector(writer, _bases, "bases");
+	saveVector(writer, _twitchPilots, "twitchPilots");
 	saveVector(writer, _waypoints, "waypoints");
 	saveVector(writer, _missionSites, "missionSites");
 	// Alien bases must be saved before alien missions.
@@ -1287,6 +1302,15 @@ int SavedGame::getCountryFunding() const
 std::vector<Region*> *SavedGame::getRegions()
 {
 	return &_regions;
+}
+
+/**
+* Returns the list of Twitch pilots.
+* @return Pointer to base list.
+*/
+std::vector<TwitchPilot*>* SavedGame::getTwitchPilots()
+{
+	return &_twitchPilots;
 }
 
 /**

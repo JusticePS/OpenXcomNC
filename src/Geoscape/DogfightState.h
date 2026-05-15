@@ -25,6 +25,8 @@
 namespace OpenXcom
 {
 
+typedef std::pair<std::string, int> CraftId;
+
 const int STANDOFF_DIST = 560;
 const int AGGRESSIVE_DIST = 64;
 enum ColorNames { CRAFT_MIN, CRAFT_MAX, RADAR_MIN, RADAR_MAX, DAMAGE_MIN, DAMAGE_MAX, BLOB_MIN, RANGE_METER, DISABLED_WEAPON, DISABLED_AMMO, DISABLED_RANGE, SHIELD_MIN, SHIELD_MAX };
@@ -38,6 +40,7 @@ class GeoscapeState;
 class Craft;
 class Ufo;
 class CraftWeaponProjectile;
+class TwitchPilot;
 
 /**
  * Shows a dogfight (interception) between a
@@ -177,6 +180,8 @@ public:
 	bool getWaitForAltitude() const;
 	/// Award experience to the pilots.
 	void awardExperienceToPilots();
+	/// Report defeated UFO to twitch
+	void ReportTwitchUFODefeated(TwitchPilot* pilot, bool destroyed, int totalPoints, CraftId craftId, int ufoId, const std::vector<TwitchPilot*>* twitchPilotList);
 };
 
 }

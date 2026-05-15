@@ -43,7 +43,7 @@ private:
 	Text *_txtETA;
 	TextButton *_btnOk, *_btnTransfer, *_btnCancel;
 	ToggleTextButton *_btnFollowWingLeader;
-	// Checks the starting condition
+	// Checks the starting condition for the internal _crafts and _target
 	std::string checkStartingCondition();
 public:
 	/// Creates the Confirm Destination state.
@@ -56,6 +56,8 @@ public:
 	void btnTransferClick(Action *action);
 	/// Handler for clicking the Cancel button.
 	void btnCancelClick(Action *action);
+	// Checks the starting condition for provided _crafts and _target
+	static std::string checkStartingCondition(std::vector<Craft*> _crafts, Target* _target);
 };
 
 }

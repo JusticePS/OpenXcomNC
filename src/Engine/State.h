@@ -105,6 +105,8 @@ public:
 	/// Resets all the state surfaces.
 	void resetAll();
 	/// Get the localized text.
+	static LocalizedText trStatic(const std::string& id);
+	/// Get the localized text.
 	LocalizedText tr(const std::string &id) const;
 	/// Get the localized text.
 	LocalizedText trAlt(const std::string &id, int alt) const;

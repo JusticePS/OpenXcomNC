@@ -66,6 +66,7 @@ class RuleSoldierTransformation;
 class AlienRace;
 struct MissionStatistics;
 struct BattleUnitKills;
+class TwitchPilot;
 
 /**
  * Enumerator containing all the possible game difficulties.
@@ -135,6 +136,7 @@ private:
 	std::vector<Country*> _countries;
 	std::vector<Region*> _regions;
 	std::vector<Base*> _bases;
+	std::vector<TwitchPilot*> _twitchPilots;
 	std::vector<Ufo*> _ufos;
 	std::vector<Waypoint*> _waypoints;
 	std::vector<MissionSite*> _missionSites;
@@ -261,6 +263,10 @@ public:
 	std::vector<Region*> *getRegions();
 	/// Gets the list of bases.
 	std::vector<Base*> *getBases();
+	/// Gets the list of twitch pilots.
+	std::vector<TwitchPilot*>* getTwitchPilots();
+	/// Gets the list of twitch pilots.
+	const std::vector<TwitchPilot*>* getTwitchPilots()const;
 	/// Gets the list of bases.
 	const std::vector<Base*> *getBases() const;
 	/// Gets the total base maintenance.

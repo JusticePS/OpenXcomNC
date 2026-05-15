@@ -177,16 +177,24 @@ ConfirmDestinationState::~ConfirmDestinationState()
 }
 
 /**
-* Checks the starting condition.
+* Checks the starting condition using the internal _crafts and _target.
 */
 std::string ConfirmDestinationState::checkStartingCondition()
+{
+	return checkStartingCondition(_crafts, _target);
+}
+
+/**
+* Checks the starting condition.
+*/
+std::string ConfirmDestinationState::checkStartingCondition(std::vector<Craft*> _crafts, Target* _target)
 {
 	// Check all selected craft
 	for (auto* xcraft : _crafts)
 	{
 		if (xcraft->areBannedArmorsOnboard())
 		{
-			return tr("STR_ARMOR_NOT_ALLOWED_ONBOARD");
+			return trStatic("STR_ARMOR_NOT_ALLOWED_ONBOARD");
 		}
 	}
 
@@ -231,7 +239,7 @@ std::string ConfirmDestinationState::checkStartingCondition()
 	{
 		if (!u || u->getStatus() == Ufo::LANDED || u->getStatus() == Ufo::CRASHED)
 		{
-			return tr("STR_STARTING_CONDITION_COMMANDER");
+			return trStatic("STR_STARTING_CONDITION_COMMANDER");
 		}
 	}
 
@@ -250,11 +258,11 @@ std::string ConfirmDestinationState::checkStartingCondition()
 		{
 			if (i2 > 0)
 				ss2 << ", ";
-			ss2 << tr(pair.first) << ": " << pair.second;
+			ss2 << trStatic(pair.first) << ": " << pair.second;
 			i2++;
 		}
 		std::string argument2 = ss2.str();
-		return tr("STR_STARTING_CONDITION_ITEM").arg(argument2);
+		return trStatic("STR_STARTING_CONDITION_ITEM").arg(argument2);
 	}
 
 	// check permitted soldiers
@@ -272,7 +280,7 @@ std::string ConfirmDestinationState::checkStartingCondition()
 			{
 				if (i > 0)
 					ss << ", ";
-				ss << tr(soldierType);
+				ss << trStatic(soldierType);
 				i++;
 			}
 		}
@@ -280,9 +288,9 @@ std::string ConfirmDestinationState::checkStartingCondition()
 		if (argument.empty())
 		{
 			// no suitable soldier type yet?
-			argument = tr("STR_UNKNOWN");
+			argument = trStatic("STR_UNKNOWN");
 		}
-		return tr(messageCode).arg(argument);
+		return trStatic(messageCode).arg(argument);
 	}
 
 	if (rule->isCraftPermitted(_crafts.front()->getRules()->getType()))
@@ -304,7 +312,7 @@ std::string ConfirmDestinationState::checkStartingCondition()
 		{
 			if (i > 0)
 				ss << ", ";
-			ss << tr(articleName);
+			ss << trStatic(articleName);
 			i++;
 		}
 	}
@@ -312,9 +320,9 @@ std::string ConfirmDestinationState::checkStartingCondition()
 	if (argument.empty())
 	{
 		// no suitable craft yet
-		argument = tr("STR_UNKNOWN");
+		argument = trStatic("STR_UNKNOWN");
 	}
-	return tr(messageCode).arg(argument);
+	return trStatic(messageCode).arg(argument);
 }
 
 /**

@@ -34,6 +34,7 @@ class ModInfo;
 class FpsCounter;
 class Action;
 class GeoscapeState;
+class NetControl;
 
 /**
  * The core of the game engine, manages the game's entire contents and structure.
@@ -59,6 +60,7 @@ private:
 	bool _ctrl, _alt, _shift, _rmb, _mmb;
 	int _scrollStep;
 	static const double VOLUME_GRADIENT;
+	NetControl* _netControl;
 
 public:
 	/// Creates a new game and initializes SDL.
@@ -115,6 +117,8 @@ public:
 	void setUpdateFlag(bool update) { _update = update; }
 	/// Returns the update flag.
 	bool getUpdateFlag() const { return _update; }
+	/// Returns the netControl
+	NetControl* getNetControl() const { return _netControl; }
 
 	/// Is CTRL pressed?
 	bool isCtrlPressed(bool considerTouchButtons = false) const;

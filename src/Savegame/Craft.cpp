@@ -260,6 +260,7 @@ void Craft::load(const YAML::YamlNodeReader& node, const ScriptGlobal *shared, c
 	reader.tryRead("customSoldierDeployment", _customSoldierDeployment);
 	reader.tryRead("customVehicleDeployment", _customVehicleDeployment);
 	reader.tryRead("skinIndex", _skinIndex);
+	reader.tryRead("twitchPilotId", _twitchPilotId);
 	if (_skinIndex > _rules->getMaxSkinIndex())
 	{
 		_skinIndex = 0;
@@ -375,6 +376,7 @@ void Craft::save(YAML::YamlNodeWriter writer, const ScriptGlobal *shared) const
 		writer.write("isAutoPatrolling", _isAutoPatrolling);
 	writer.write("lonAuto", serializeDouble(_lonAuto));
 	writer.write("latAuto", serializeDouble(_latAuto));
+	writer.write("twitchPilotId", _twitchPilotId);
 	if (_pilots.size())
 		writer.write("pilots", _pilots);
 	if (!_customSoldierDeployment.empty())
@@ -1132,6 +1134,7 @@ bool Craft::isTakingOff() const
  */
 void Craft::checkup()
 {
+	_twitchPilotId = 0;
 	int available = 0, full = 0;
 	for (auto* cw : _weapons)
 	{

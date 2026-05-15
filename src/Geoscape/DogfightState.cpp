@@ -47,6 +47,7 @@
 #include "../Savegame/Base.h"
 #include "../Savegame/CraftWeaponProjectile.h"
 #include "../Savegame/Country.h"
+#include "../Savegame/TwitchPilot.h"
 #include "../Mod/RuleCountry.h"
 #include "../Savegame/Region.h"
 #include "../Mod/RuleRegion.h"
@@ -54,6 +55,8 @@
 #include "DogfightErrorState.h"
 #include "../Mod/RuleInterface.h"
 #include "../Mod/Mod.h"
+#include "../Engine/NetControl_Packets.h"
+#include "../Engine/NetControl.h"
 
 namespace OpenXcom
 {
@@ -708,6 +711,31 @@ DogfightState::DogfightState(GeoscapeState *state, Craft *craft, Ufo *ufo, bool 
 				++_craftHeight;
 				break;
 			}
+		}
+	}
+
+	if (!_ufoIsAttacking)
+	
+	{
+		SDL_Event simEv;
+		simEv.type = SDL_MOUSEBUTTONDOWN;
+		simEv.button.button = SDL_BUTTON_LEFT;
+		Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+
+		//TODO - justice: this is just auto-set tactics
+		switch (_ufoSize)
+		{
+			case 0:
+			case 1:
+				btnAggressiveSimulateLeftPress(&a); //very small and small ships - auto aggressive
+				break;
+			case 2:
+			case 3:
+				btnStandardSimulateLeftPress(&a); //medium and large ships - auto standard
+			break;
+			default : //very large and up - DONT AUTO ATTACK.  Just look at it.
+				_btnUfo->mousePress(&a, this);
+			break;
 		}
 	}
 
@@ -1588,6 +1616,7 @@ void DogfightState::update()
 
 			if (_ufo->getShotDownByCraftId() == _craft->getUniqueId())
 			{
+				//TODO - Justice: Save shot down info to pilot
 				AlienRace *race = _game->getMod()->getAlienRace(_ufo->getAlienRace());
 				AlienMission *mission = _ufo->getMission();
 				mission->ufoShotDown(*_ufo);
@@ -1661,13 +1690,49 @@ void DogfightState::update()
 
 			if (_ufo->isDestroyed())
 			{
+				//TODO - Justice: Send shot down/destroyed reports back to bot so it can tell chat and obs plugin
+				//Include current downs, kills, and score.  If pilot is valid, anyway.
 				if (_ufo->getShotDownByCraftId() == _craft->getUniqueId())
 				{
+					int64_t twitchId = _craft->getTwitchPilot();
+					TwitchPilot* pilot = nullptr;
+					if (twitchId != 0)
+					{
+						auto* twitchPilots = _game->getSavedGame()->getTwitchPilots();
+
+						for (auto iter = twitchPilots->begin(); iter != twitchPilots->end(); ++iter)
+						{
+							if ((*iter)->getId() == twitchId)
+							{
+								pilot = *iter;
+							}
+						}
+
+						if (pilot != nullptr)
+						{
+							if (_ufo->isDestroyed())
+							{
+								pilot->addKill();
+							}
+							else
+							{
+								pilot->addDown();
+							}
+						}
+					}
+
+					int totalPoints = 0;
 					for (auto* country : *_game->getSavedGame()->getCountries())
 					{
 						if (country->getRules()->insideCountry(_ufo->getLongitude(), _ufo->getLatitude()))
 						{
-							country->addActivityXcom(_ufo->getRules()->getScore()*2);
+							int score = _ufo->getRules()->getScore() * 2;
+							if (pilot != nullptr)
+							{
+								pilot->addPoints(score);
+							}
+							country->addActivityXcom(score);
+							totalPoints += score;
 							break;
 						}
 					}
@@ -1675,10 +1740,17 @@ void DogfightState::update()
 					{
 						if (region->getRules()->insideRegion(_ufo->getLongitude(), _ufo->getLatitude()))
 						{
-							region->addActivityXcom(_ufo->getRules()->getScore()*2);
+							int score = _ufo->getRules()->getScore() * 2;
+							if (pilot != nullptr)
+							{
+								pilot->addPoints(score);
+							}
+							region->addActivityXcom(score);
+							totalPoints += score;
 							break;
 						}
 					}
+					ReportTwitchUFODefeated(pilot, true, totalPoints, _craft->getUniqueId(), _ufo->getId(), _game->getSavedGame()->getTwitchPilots());
 					setStatus("STR_UFO_DESTROYED");
 					_game->getMod()->getSound("GEO.CAT", Mod::UFO_EXPLODE)->play(); //11
 				}
@@ -1688,13 +1760,47 @@ void DogfightState::update()
 			{
 				if (_ufo->getShotDownByCraftId() == _craft->getUniqueId())
 				{
+					int64_t twitchId = _craft->getTwitchPilot();
+					TwitchPilot* pilot = nullptr;
+					if (twitchId != 0)
+					{
+						auto* twitchPilots = _game->getSavedGame()->getTwitchPilots();
+
+						for (auto iter = twitchPilots->begin(); iter != twitchPilots->end(); ++iter)
+						{
+							if ((*iter)->getId() == twitchId)
+							{
+								pilot = *iter;
+							}
+						}
+
+						if (pilot != nullptr)
+						{
+							if (_ufo->isDestroyed())
+							{
+								pilot->addKill();
+							}
+							else
+							{
+								pilot->addDown();
+							}
+						}
+					}
+
 					setStatus("STR_UFO_CRASH_LANDS");
 					_game->getMod()->getSound("GEO.CAT", Mod::UFO_CRASH)->play(); //10
+					int totalPoints = 0;
 					for (auto* country : *_game->getSavedGame()->getCountries())
 					{
 						if (country->getRules()->insideCountry(_ufo->getLongitude(), _ufo->getLatitude()))
 						{
-							country->addActivityXcom(_ufo->getRules()->getScore());
+							int score = _ufo->getRules()->getScore();
+							if (pilot != nullptr)
+							{
+								pilot->addPoints(score);
+							}
+							country->addActivityXcom(score);
+							totalPoints += score;
 							break;
 						}
 					}
@@ -1702,10 +1808,17 @@ void DogfightState::update()
 					{
 						if (region->getRules()->insideRegion(_ufo->getLongitude(), _ufo->getLatitude()))
 						{
-							region->addActivityXcom(_ufo->getRules()->getScore());
+							int score = _ufo->getRules()->getScore();
+							if (pilot != nullptr)
+							{
+								pilot->addPoints(score);
+							}
+							region->addActivityXcom(score);
+							totalPoints += score;
 							break;
 						}
 					}
+					ReportTwitchUFODefeated(pilot, false, totalPoints, _craft->getUniqueId(), _ufo->getId(), _game->getSavedGame()->getTwitchPilots());
 				}
 				bool survived = true;
 				bool fakeUnderwaterTexture = _state->getGlobe()->insideFakeUnderwaterTexture(_ufo->getLongitude(), _ufo->getLatitude());
@@ -2746,5 +2859,40 @@ void DogfightState::awardExperienceToPilots()
 		_experienceAwarded = true;
 	}
 }
+
+void DogfightState::ReportTwitchUFODefeated(TwitchPilot* pilot, bool destroyed, int totalPoints, CraftId craftId, int ufoId, const std::vector<TwitchPilot*>* twitchPilotList)
+{
+	NetControlPackets::NetControl_UFODefeated packet;
+	auto hash = std::hash<std::string>{}(std::string(craftId.first)) + craftId.second;
+	packet.interceptorId = hash;
+	packet.ufoId = ufoId;
+	packet.points = totalPoints;
+	packet.destroyed = destroyed;
+	if (pilot != nullptr)
+	{
+		packet.pilot = pilot->getId();
+		packet.pilotScore = pilot->getPoints();
+		packet.pilotDowns = pilot->getDowns();
+		packet.pilotKills = pilot->getKills();
+		packet.pilotLeaderboardPosition = 0;
+
+		if (twitchPilotList != nullptr)
+		{
+			packet.pilotLeaderboardPosition = 1;
+			for (auto iter = twitchPilotList->begin(); iter != twitchPilotList->end(); ++iter)
+			{
+				if (*iter != nullptr)
+				{
+					if ((*iter)->getPoints() > packet.pilotScore)
+					{
+						packet.pilotLeaderboardPosition += 1;
+					}
+				}
+			}
+		}
+	}
+	_game->getNetControl()->SendPacketBot(&packet, sizeof(packet));
+}
+
 
 }

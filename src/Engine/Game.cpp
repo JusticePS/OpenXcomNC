@@ -45,6 +45,8 @@
 #include "../Menu/TestState.h"
 #include <algorithm>
 #include "../fallthrough.h"
+#include <SDL_net.h>
+#include "NetControl.h"
 
 namespace OpenXcom
 {
@@ -70,6 +72,14 @@ Game::Game(const std::string &title) : _screen(0), _cursor(0), _lang(0), _save(0
 		throw Exception(SDL_GetError());
 	}
 	Log(LOG_INFO) << "SDL initialized successfully.";
+
+	if (SDLNet_Init() < 0)
+	{
+		Log(LOG_ERROR) << SDL_GetError();
+		Log(LOG_WARNING) << "SDLNet_Init failure, quit";
+		throw Exception(SDL_GetError());
+	}
+	_netControl = new NetControl(this);
 
 	// Initialize SDL_mixer
 	initAudio();
@@ -112,6 +122,10 @@ Game::Game(const std::string &title) : _screen(0), _cursor(0), _lang(0), _save(0
  */
 Game::~Game()
 {
+	if (_netControl != nullptr)
+		delete _netControl;
+	_netControl = nullptr;
+	SDLNet_Quit();
 	Sound::stop();
 	Music::stop();
 
@@ -327,6 +341,9 @@ void Game::run()
 				break;
 			}
 		}
+
+		if (_netControl != nullptr)
+			_netControl->Update();
 
 		// Process rendering
 		if (runningState != PAUSED)

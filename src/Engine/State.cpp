@@ -425,6 +425,17 @@ LocalizedText State::tr(const std::string &id) const
 }
 
 /**
+ * Get the localized text for dictionary key @a id.
+ * This function forwards the call to Language::getString(const std::string &).
+ * @param id The dictionary key to search for.
+ * @return The localized text.
+ */
+LocalizedText State::trStatic(const std::string& id)
+{
+	return _game->getLanguage()->getString(id);
+}
+
+/**
 * Get the localized text from dictionary.
 * This function forwards the call to Language::getString(const std::string &).
 * @param id The (prefix of) dictionary key to search for.
