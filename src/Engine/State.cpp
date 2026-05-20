@@ -697,6 +697,21 @@ int State::getCursorY() const
 	return _game->getCursor()->getY();
 }
 
+// Finds a textButton with a specific label and sends a mouse press
+void State::pressSurfaceWithLabel(const std::string& labelText)
+{
+	for (auto* surface : _surfaces)
+	{
+		if (surface->pressIfLabelMatches(labelText, this, true, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
+			return;
+	}
+	for (auto* surface : _surfaces)
+	{
+		if (surface->pressIfLabelMatches(labelText, this, false, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
+			return;
+	}
+}
+
 void State::setGamePtr(Game* game)
 {
 	_game = game;

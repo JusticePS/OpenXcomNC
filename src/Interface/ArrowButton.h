@@ -63,6 +63,8 @@ public:
 	void mouseRelease(Action *action, State *state) override;
 	/// Special handling for mouse clicks.
 	void mouseClick(Action *action, State *state) override;
+	/// Sends a mousepress if this matches up/down/left/right
+	bool pressIfLabelMatches(const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) override;
 };
 
 }

@@ -13,7 +13,8 @@
 #include "../Savegame/ResearchProject.h"
 #include "../Mod/RuleResearch.h"
 #include "../Engine/Language.h"
-
+#include "Screen.h"
+#include "Action.h"
 
 namespace OpenXcom
 {
@@ -63,6 +64,13 @@ namespace NetControlPackets
 					{
 						NetControl_ResearchSetScientists* research = (NetControl_ResearchSetScientists*)buffer;
 						research->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::UI_PRESS_INTERACTIVE_SURFACE:
+					if (packetSize >= sizeof(NetControl_UIPressInteractiveSurface))
+					{
+						NetControl_UIPressInteractiveSurface* press = (NetControl_UIPressInteractiveSurface*)buffer;
+						press->_Execute(nc, game);
 					}
 					break;
 				}
@@ -291,5 +299,66 @@ namespace NetControlPackets
 			}
 		}
 	}
-}
+
+	void NetControl_UIPressInteractiveSurface::_Execute(NetControl* nc, Game* game)
+	{
+		
+		State* state = game->peekState();
+		if (state == nullptr)
+		{
+			return;
+		}
+		// TODO!
+		if (xpos >= 0 && ypos >= 0)
+		{
+			//Action(SDL_Event * ev, double scaleX, double scaleY, int topBlackBand, int leftBlackBand);
+
+			{
+				SDL_Event simEv;
+				simEv.type = SDL_MOUSEBUTTONDOWN;
+				simEv.button.button = SDL_BUTTON_LEFT;
+				simEv.button.x = xpos;
+				simEv.button.y = ypos;
+				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+				SDL_WarpMouse(action.getLeftBlackBand() + action.getXMouse(), action.getTopBlackBand() + action.getYMouse() );
+
+				state->handle(&action);
+			}
+			{
+				SDL_Event simEv;
+				simEv.type = SDL_MOUSEBUTTONUP;
+				simEv.button.button = SDL_BUTTON_LEFT;
+				simEv.button.x = xpos;
+				simEv.button.y = ypos;
+				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+				state->handle(&action);
+			}
+			
+			
+		}
+		else if (keyNumber != -1)
+		{
+			{
+				SDL_Event simEv;
+				simEv.type = SDL_KEYDOWN;
+				simEv.key.keysym.sym = (SDLKey)keyNumber;
+				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+				state->handle(&action);
+			}
+			{
+				SDL_Event simEv;
+				simEv.type = SDL_KEYUP;
+				simEv.key.keysym.sym = (SDLKey)keyNumber;
+				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+				state->handle(&action);
+			}
+		}
+		else if (label[0] != 0)
+		{
+			std::string labelText = std::string(label);
+			state->pressSurfaceWithLabel(labelText);
+		}
+	}
+
+	}
 }

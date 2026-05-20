@@ -1390,4 +1390,143 @@ void TextList::setIgnoreSeparators(bool ignoreSeparators)
 	_ignoreSeparators = ignoreSeparators;
 }
 
+bool TextList::pressIfLabelMatches(const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
+{
+	size_t plus_index = textLabel.find('+');
+	size_t minus_index = textLabel.find('-');
+	std::string num_substr;
+	int num_presses = 1;
+	auto back_iterator = textLabel.end();
+	if ((plus_index >= 1 && plus_index != -1) || (minus_index >= 1 && minus_index != -1))
+	{
+		if (plus_index >= 1 && plus_index != -1)
+		{
+			num_substr = textLabel.substr(plus_index+1);
+			for (int i = plus_index; i < textLabel.size(); ++i)
+			{
+				back_iterator--;
+			}
+		}
+		else
+		{
+			num_substr = textLabel.substr(minus_index+1);
+			for (int i = minus_index; i < textLabel.size(); ++i)
+			{
+				back_iterator--;
+			}
+		}
+		num_presses = std::stoi(num_substr);
+	}
+	else
+	{
+		plus_index = minus_index = -1;
+	}
+	int main_index = -1;
+	for (auto& iter : _texts)
+	{
+		++main_index;
+		for (auto* inner : iter)
+		{
+			if (inner != nullptr)
+			{
+				const std::string & myText = inner->getText();
+				auto myTextIter = myText.begin();
+				int sizemod = 0;
+				while (myTextIter != myText.end() && *myTextIter == ' ')
+				{
+					++myTextIter;
+					sizemod++;
+				}
+				if (textLabel.size() <= myText.size() - sizemod && std::equal(textLabel.begin(), back_iterator, myTextIter, [](auto a, auto b)
+					{ return std::tolower(a) == std::tolower(b); }))
+				{
+					InteractiveSurface* thing_to_press = inner;
+					//TODO: warp mouse?  not sure how it's determining which thing is pressed in purchaseState, but doesn't seem to be the index of the one I'm sending click to
+					//or else the order is different
+					auto* plus_arrows = &_arrowRight;
+					auto* minus_arrows = &_arrowLeft;
+					if (_arrowType == ArrowOrientation::ARROW_VERTICAL)
+					{
+						plus_arrows = &_arrowLeft;
+						minus_arrows = &_arrowRight;
+					}
+					if (plus_index != -1)
+					{
+						if (plus_arrows->size() > main_index && (*plus_arrows)[main_index] != nullptr)
+						{
+							thing_to_press = (*plus_arrows)[main_index];
+						}
+					}
+					else if (minus_index != -1)
+					{
+						if (minus_arrows->size() > main_index && (*minus_arrows)[main_index] != nullptr)
+						{
+							thing_to_press = (*minus_arrows)[main_index];
+						}
+					}
+					for (int i = 0; i < num_presses; ++i)
+					{
+						{
+							SDL_Event simEv;
+							simEv.type = SDL_MOUSEMOTION;
+							simEv.motion.state = 0;
+							simEv.motion.which = 0;
+							simEv.motion.xrel = 0;
+							simEv.motion.yrel = 0;
+							simEv.motion.x = thing_to_press->getX() + getX() * xscale;
+							simEv.motion.y = thing_to_press->getY() + getY() * yscale;
+							Action a = Action(&simEv, xscale, yscale, topband, leftband);
+							SDL_WarpMouse(a.getLeftBlackBand() + a.getXMouse(), a.getTopBlackBand() + a.getYMouse());
+							if( plus_index != -1 || minus_index != -1)
+								a.setMouseAction((thing_to_press->getX() - getX()) * xscale, (thing_to_press->getY() - getY()) * yscale, 0, 0); //this one works for arrows
+							else
+								a.setMouseAction(thing_to_press->getX() * xscale + getX() * xscale, thing_to_press->getY() * yscale + getY() * yscale, getX(), getY() );
+							mouseOver(&a, state);
+							inner->mouseOver(&a, state);
+							thing_to_press->mouseOver(&a, state);
+						}
+
+
+						{
+							SDL_Event simEv;
+							simEv.type = SDL_MOUSEBUTTONDOWN;
+							simEv.button.button = SDL_BUTTON_LEFT;
+							simEv.button.x = thing_to_press->getX();
+							simEv.button.y = thing_to_press->getY();
+							Action a = Action(&simEv, xscale, yscale, topband, leftband);
+							a.setMouseAction(thing_to_press->getX() * xscale, thing_to_press->getY() * yscale, getX(), getY());
+							thing_to_press->mousePress(&a, state);
+						}
+
+						{
+							SDL_Event simEv;
+							simEv.type = SDL_MOUSEBUTTONUP;
+							simEv.button.button = SDL_BUTTON_LEFT;
+							simEv.button.x = thing_to_press->getX();
+							simEv.button.y = thing_to_press->getY();
+							Action a = Action(&simEv, xscale, yscale, topband, leftband);
+							a.setMouseAction(thing_to_press->getX() * xscale, thing_to_press->getY() * yscale, getX(), getY());
+							thing_to_press->mouseRelease(&a, state);
+						}
+
+						{
+							SDL_Event simEv;
+							simEv.type = SDL_MOUSEBUTTONUP;
+							simEv.button.button = SDL_BUTTON_LEFT;
+							simEv.button.x = thing_to_press->getX();
+							simEv.button.y = thing_to_press->getY();
+							Action a = Action(&simEv, xscale, yscale, topband, leftband);
+							a.setMouseAction(thing_to_press->getX() * xscale, thing_to_press->getY() * yscale, getX(), getY());
+							mouseClick(&a, state);
+							thing_to_press->mouseClick(&a, state);
+						}
+					}
+					return true;
+				}
+			}
+		}
+
+	}
+	return false;
+}
 }

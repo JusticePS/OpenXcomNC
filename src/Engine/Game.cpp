@@ -504,6 +504,16 @@ void Game::popState()
 }
 
 /**
+ * Peeks the last state from the top of the stack.
+ */
+State* Game::peekState()
+{
+	if (_states.size() > 0 )
+		return _states.back();
+	return nullptr;
+}
+
+/**
  * Sets a new saved game for the game to use.
  * @param save Pointer to the saved game.
  */

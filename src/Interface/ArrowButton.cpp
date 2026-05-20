@@ -372,4 +372,58 @@ void ArrowButton::mouseClick(Action *action, State *state)
 	}
 }
 
+/// Sends a mousepress if this matches up/down/left/right
+bool ArrowButton::pressIfLabelMatches(const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
+{
+	std::string arrow_text = std::string("");
+	switch (_shape)
+	{
+	case ArrowShape::ARROW_BIG_DOWN:
+	case ArrowShape::ARROW_SMALL_DOWN:
+		arrow_text = "down";
+		break;
+	case ArrowShape::ARROW_BIG_UP:
+	case ArrowShape::ARROW_SMALL_UP:
+		arrow_text = "up";
+		break;
+	case ArrowShape::ARROW_SMALL_LEFT:
+		arrow_text = "left";
+		break;
+	case ArrowShape::ARROW_SMALL_RIGHT:
+		arrow_text = "right";
+		break;
+
+	}
+
+	if (textLabel.size() <= arrow_text.size() && std::equal(textLabel.begin(), textLabel.end(), arrow_text.begin(), [](auto a, auto b)
+															{ return std::tolower(a) == std::tolower(b); }))
+	{
+		{
+			SDL_Event simEv;
+			simEv.type = SDL_MOUSEBUTTONDOWN;
+			simEv.button.button = SDL_BUTTON_LEFT;
+			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+			mousePress(&a, state);
+		}
+
+		{
+			SDL_Event simEv;
+			simEv.type = SDL_MOUSEBUTTONUP;
+			simEv.button.button = SDL_BUTTON_LEFT;
+			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+			mouseRelease(&a, state);
+		}
+
+		{
+			SDL_Event simEv;
+			simEv.type = SDL_MOUSEBUTTONUP;
+			simEv.button.button = SDL_BUTTON_LEFT;
+			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+			mouseClick(&a, state);
+		}
+		return true;
+	}
+	return false;
+}
+
 }

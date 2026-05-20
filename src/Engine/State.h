@@ -151,6 +151,9 @@ public:
 	int getCursorX() const;
 	/// Gets cursor Y coordinate.
 	int getCursorY() const;
+
+	// Finds a surface with a specific label and sends a mouse press
+	void pressSurfaceWithLabel(const std::string& labelText);
 };
 
 }

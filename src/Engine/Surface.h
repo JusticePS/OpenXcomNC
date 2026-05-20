@@ -32,6 +32,7 @@ class Font;
 class Language;
 class ScriptWorkerBase;
 class SurfaceCrop;
+class State;
 template<typename Pixel> class SurfaceRaw;
 
 /**
@@ -330,6 +331,9 @@ public:
 	virtual void setBorderColor(Uint8 /*color*/) { /* empty by design */ };
 	/// Sets the high contrast color setting of the surface.
 	virtual void setHighContrast(bool /*contrast*/) { /* empty by design */ };
+
+	/// Sends a mousepress if the label matches this (in classes where this is overridden)
+	virtual bool pressIfLabelMatches(const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) { return false; }
 };
 
 /**

@@ -88,6 +88,8 @@ public:
 	void setWidth(int width) override;
 	void setHeight(int height) override;
 	void setGeoscapeButton(bool geo);
+	/// Sends a mousepress if the label matches this (in classes where this is overridden)
+	bool pressIfLabelMatches(const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband);
 };
 
 }

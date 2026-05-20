@@ -21,7 +21,10 @@ namespace NetControlPackets
 		REQUEST_RESEARCH_INFO = 8,
 		RESEARCH_INFO_LABS = 9,
 		RESEARCH_INFO_PROJECT = 10,
-		RESEARCH_SET_SCIENTISTS = 11
+		RESEARCH_SET_SCIENTISTS = 11,
+		UI_GET_INTERACTIVE_SURFACES_INFOS = 12, //NYI
+		UI_INTERACTIVE_SURFACES_INFOS = 13, //NYI
+		UI_PRESS_INTERACTIVE_SURFACE = 14, //NYI
 	};
 
 
@@ -184,6 +187,17 @@ public:
 	{
 
 	}
+
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_UIPressInteractiveSurface : NetControl_PacketBase
+{
+public:
+	char label[32];
+	int16_t keyNumber;
+	int xpos;
+	int ypos;
 
 	void _Execute(NetControl* nc, Game* game);
 };

@@ -87,6 +87,8 @@ public:
 	void pushState(State *state);
 	/// Pops the last state from the state stack.
 	void popState();
+	/// Gets the top state from the state stack
+	State* peekState();
 	/// Gets the currently loaded language.
 	Language *getLanguage() const { return _lang; }
 	/// Gets the currently loaded saved game.
