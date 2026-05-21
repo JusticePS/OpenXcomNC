@@ -73,6 +73,13 @@ namespace NetControlPackets
 						press->_Execute(nc, game);
 					}
 					break;
+				case NetControlPacketTypes::UI_RAW_TEXT:
+					if (packetSize >= sizeof(NetControl_UIRawText))
+					{
+						NetControl_UIRawText* rawText = (NetControl_UIRawText*)buffer;
+						rawText->_Execute(nc, game);
+					}
+					break;
 				}
 			}
 		}
@@ -308,11 +315,8 @@ namespace NetControlPackets
 		{
 			return;
 		}
-		// TODO!
 		if (xpos >= 0 && ypos >= 0)
 		{
-			//Action(SDL_Event * ev, double scaleX, double scaleY, int topBlackBand, int leftBlackBand);
-
 			{
 				SDL_Event simEv;
 				simEv.type = SDL_MOUSEBUTTONDOWN;
@@ -360,5 +364,34 @@ namespace NetControlPackets
 		}
 	}
 
+	void NetControl_UIRawText::_Execute(NetControl* nc, Game* game)
+	{
+
+		State* state = game->peekState();
+		if (state == nullptr)
+		{
+			return;
+		}
+		std::string textStr = std::string(text);
+		for (int i = 0; i < textStr.size(); ++i)
+		{
+			{
+				SDL_Event simEv;
+				simEv.type = SDL_KEYDOWN;
+				simEv.key.keysym.sym = SDLKey::SDLK_UNKNOWN;
+				simEv.key.keysym.unicode = textStr[i];
+				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+				state->handle(&action);
+			}
+			{
+				SDL_Event simEv;
+				simEv.type = SDL_KEYUP;
+				simEv.key.keysym.sym = SDLKey::SDLK_UNKNOWN;
+				simEv.key.keysym.unicode = textStr[i];
+				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+				state->handle(&action);
+			}
+		}
 	}
+}
 }

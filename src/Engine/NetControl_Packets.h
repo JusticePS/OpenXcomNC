@@ -25,6 +25,7 @@ namespace NetControlPackets
 		UI_GET_INTERACTIVE_SURFACES_INFOS = 12, //NYI
 		UI_INTERACTIVE_SURFACES_INFOS = 13, //NYI
 		UI_PRESS_INTERACTIVE_SURFACE = 14, //NYI
+		UI_RAW_TEXT = 15,
 	};
 
 
@@ -198,6 +199,14 @@ public:
 	int16_t keyNumber;
 	int xpos;
 	int ypos;
+
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_UIRawText : NetControl_PacketBase
+{
+  public:
+	char text[64];
 
 	void _Execute(NetControl* nc, Game* game);
 };
