@@ -946,6 +946,30 @@ void Globe::blink()
  * since the globe keeps rotating while a button
  * is pressed down.
  */
+void Globe::rotateLeftRight(double amount)
+{
+	_cenLon += amount / 10.0;
+	_game->getSavedGame()->setGlobeLongitude(_cenLon);
+	invalidate();
+}
+
+/**
+ * Rotates the globe by a set amount. Necessary
+ * since the globe keeps rotating while a button
+ * is pressed down.
+ */
+void Globe::rotateUpDown(double amount)
+{
+	_cenLat += amount / 10.0;
+	_game->getSavedGame()->setGlobeLatitude(_cenLat);
+	invalidate();
+}
+
+/**
+ * Rotates the globe by a set amount. Necessary
+ * since the globe keeps rotating while a button
+ * is pressed down.
+ */
 void Globe::rotate()
 {
 	_cenLon += _rotLon * ((110 - Options::geoScrollSpeed) / 100.0) / (_zoom+1);

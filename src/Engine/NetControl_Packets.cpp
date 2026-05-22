@@ -80,6 +80,20 @@ namespace NetControlPackets
 						rawText->_Execute(nc, game);
 					}
 					break;
+				case NetControlPacketTypes::GEOSCAPE_ROTATE:
+					if (packetSize >= sizeof(NetControl_GeoscapeRotate))
+					{
+						NetControl_GeoscapeRotate* rotate = (NetControl_GeoscapeRotate*)buffer;
+						rotate->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::MOVE_CURSOR:
+					if (packetSize >= sizeof(NetControl_MoveCursor))
+					{
+						NetControl_MoveCursor* rotate = (NetControl_MoveCursor*)buffer;
+						rotate->_Execute(nc, game);
+					}
+					break;
 				}
 			}
 		}
@@ -324,6 +338,7 @@ namespace NetControlPackets
 				simEv.button.x = xpos;
 				simEv.button.y = ypos;
 				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+				action.setMouseAction(xpos, ypos, 0, 0);
 				SDL_WarpMouse(action.getLeftBlackBand() + action.getXMouse(), action.getTopBlackBand() + action.getYMouse() );
 
 				state->handle(&action);
@@ -335,6 +350,7 @@ namespace NetControlPackets
 				simEv.button.x = xpos;
 				simEv.button.y = ypos;
 				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+				action.setMouseAction(xpos, ypos, 0, 0);
 				state->handle(&action);
 			}
 			
@@ -345,6 +361,8 @@ namespace NetControlPackets
 			{
 				SDL_Event simEv;
 				simEv.type = SDL_KEYDOWN;
+				simEv.key.keysym.scancode = 0;
+				simEv.key.keysym.mod = SDLMod::KMOD_NONE;
 				simEv.key.keysym.sym = (SDLKey)keyNumber;
 				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
 				state->handle(&action);
@@ -352,6 +370,8 @@ namespace NetControlPackets
 			{
 				SDL_Event simEv;
 				simEv.type = SDL_KEYUP;
+				simEv.key.keysym.scancode = 0;
+				simEv.key.keysym.mod = SDLMod::KMOD_NONE;
 				simEv.key.keysym.sym = (SDLKey)keyNumber;
 				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
 				state->handle(&action);
@@ -393,5 +413,28 @@ namespace NetControlPackets
 			}
 		}
 	}
-}
+
+	void NetControl_GeoscapeRotate::_Execute(NetControl* nc, Game* game)
+	{
+		GeoscapeState* geoState = game->getGeoscapeState();
+		if (geoState == nullptr)
+			return;
+		geoState->Rotate(amount, northSouth);
+
+	}
+
+	void NetControl_MoveCursor::_Execute(NetControl* nc, Game* game)
+	{
+		{
+			SDL_Event simEv;
+			simEv.type = SDL_MOUSEMOTION;
+			simEv.motion.x = xpos;
+			simEv.motion.y = ypos;
+			Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+			action.setMouseAction(xpos, ypos, 0, 0);
+			SDL_WarpMouse(action.getLeftBlackBand() + action.getXMouse(), action.getTopBlackBand() + action.getYMouse());
+		}
+
+	}
+	}
 }

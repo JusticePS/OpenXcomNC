@@ -196,7 +196,10 @@ public:
 	void resize(int &dX, int &dY) override;
 	/// Handle alien mission generation.
 	void determineAlienMissions(bool isNewMonth = true, const RuleEvent* eventRules = nullptr);
-private:
+	/// Rotate globe
+	void Rotate(int amount, bool northSouth);
+
+  private:
 	bool attemptAlienRaceEvolution(int month, AlienBase* ab) const;
 	/// Process each individual mission script command.
 	bool processCommand(RuleMissionScript *command);

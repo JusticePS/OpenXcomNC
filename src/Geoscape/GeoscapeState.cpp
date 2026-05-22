@@ -4345,6 +4345,16 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 	}
 }
 
+void GeoscapeState::Rotate(int amount, bool northSouth)
+{
+	if (getGlobe() == nullptr)
+		return;
+	if (!northSouth)
+		getGlobe()->rotateLeftRight(amount);
+	else
+		getGlobe()->rotateUpDown(amount);
+}
+
 /**
  * Try to perform alien race evolution.
  * @return whether the attempt was successful or not.

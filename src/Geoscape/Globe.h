@@ -171,6 +171,10 @@ public:
 	void blink();
 	/// Rotates the globe.
 	void rotate();
+	/// Rotates a specified amount
+	void rotateLeftRight(double amount);
+	/// Rotates a specified amount
+	void rotateUpDown(double amount);
 	/// Draws the whole globe.
 	void draw() override;
 	/// Draws the ocean of the globe.

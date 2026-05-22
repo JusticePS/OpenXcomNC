@@ -26,6 +26,8 @@ namespace NetControlPackets
 		UI_INTERACTIVE_SURFACES_INFOS = 13, //NYI
 		UI_PRESS_INTERACTIVE_SURFACE = 14, //NYI
 		UI_RAW_TEXT = 15,
+		GEOSCAPE_ROTATE = 16,
+		MOVE_CURSOR = 17,
 	};
 
 
@@ -207,6 +209,24 @@ struct NetControl_UIRawText : NetControl_PacketBase
 {
   public:
 	char text[64];
+
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_GeoscapeRotate : NetControl_PacketBase
+{
+  public:
+	int amount;
+	int8_t northSouth;
+
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_MoveCursor : NetControl_PacketBase
+{
+  public:
+	int xpos;
+	int ypos;
 
 	void _Execute(NetControl* nc, Game* game);
 };
