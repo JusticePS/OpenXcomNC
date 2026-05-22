@@ -1397,10 +1397,12 @@ bool TextList::pressIfLabelMatches(const std::string& textLabel, State* state, b
 	std::string num_substr;
 	int num_presses = 1;
 	auto back_iterator = textLabel.end();
+	int before_plus_or_minus_chars = textLabel.size();
 	if ((plus_index >= 1 && plus_index != -1) || (minus_index >= 1 && minus_index != -1))
 	{
 		if (plus_index >= 1 && plus_index != -1)
 		{
+			before_plus_or_minus_chars = plus_index;
 			num_substr = textLabel.substr(plus_index+1);
 			for (int i = plus_index; i < textLabel.size(); ++i)
 			{
@@ -1409,6 +1411,7 @@ bool TextList::pressIfLabelMatches(const std::string& textLabel, State* state, b
 		}
 		else
 		{
+			before_plus_or_minus_chars = minus_index;
 			num_substr = textLabel.substr(minus_index+1);
 			for (int i = minus_index; i < textLabel.size(); ++i)
 			{
@@ -1437,12 +1440,13 @@ bool TextList::pressIfLabelMatches(const std::string& textLabel, State* state, b
 					++myTextIter;
 					sizemod++;
 				}
-				if (textLabel.size() <= myText.size() - sizemod && std::equal(textLabel.begin(), back_iterator, myTextIter, [](auto a, auto b)
+				if (exactMatch && before_plus_or_minus_chars != myText.size() - sizemod)
+					continue;
+				if (before_plus_or_minus_chars <= myText.size() - sizemod && std::equal(textLabel.begin(), back_iterator, myTextIter, [](auto a, auto b)
 					{ return std::tolower(a) == std::tolower(b); }))
 				{
 					InteractiveSurface* thing_to_press = inner;
-					//TODO: warp mouse?  not sure how it's determining which thing is pressed in purchaseState, but doesn't seem to be the index of the one I'm sending click to
-					//or else the order is different
+
 					auto* plus_arrows = &_arrowRight;
 					auto* minus_arrows = &_arrowLeft;
 					if (_arrowType == ArrowOrientation::ARROW_VERTICAL)
@@ -1467,23 +1471,7 @@ bool TextList::pressIfLabelMatches(const std::string& textLabel, State* state, b
 					for (int i = 0; i < num_presses; ++i)
 					{
 						{
-							SDL_Event simEv;
-							simEv.type = SDL_MOUSEMOTION;
-							simEv.motion.state = 0;
-							simEv.motion.which = 0;
-							simEv.motion.xrel = 0;
-							simEv.motion.yrel = 0;
-							simEv.motion.x = thing_to_press->getX() + getX() * xscale;
-							simEv.motion.y = thing_to_press->getY() + getY() * yscale;
-							Action a = Action(&simEv, xscale, yscale, topband, leftband);
-							SDL_WarpMouse(a.getLeftBlackBand() + a.getXMouse(), a.getTopBlackBand() + a.getYMouse());
-							if( plus_index != -1 || minus_index != -1)
-								a.setMouseAction((thing_to_press->getX() - getX()) * xscale, (thing_to_press->getY() - getY()) * yscale, 0, 0); //this one works for arrows
-							else
-								a.setMouseAction(thing_to_press->getX() * xscale + getX() * xscale, thing_to_press->getY() * yscale + getY() * yscale, getX(), getY() );
-							mouseOver(&a, state);
-							inner->mouseOver(&a, state);
-							thing_to_press->mouseOver(&a, state);
+							_selRow = main_index;
 						}
 
 
