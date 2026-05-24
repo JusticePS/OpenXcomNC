@@ -108,7 +108,8 @@ Map::Map(Game *game, int width, int height, int x, int y, int visibleMapHeight) 
 	_game(game), _isTFTD(false), _arrow(0), _anyIndicator(false), _isAltPressed(false), _isCtrlPressed(false),
 	_selectorX(0), _selectorY(0), _mouseX(0), _mouseY(0), _cursorType(CT_NORMAL), _cursorSize(1), _animFrame(0),
 	_projectile(0), _followProjectile(true), _projectileInFOV(false), _explosionInFOV(false), _launch(false), _visibleMapHeight(visibleMapHeight),
-	_unitDying(false), _smoothingEngaged(false), _flashScreen(false), _bgColor(15), _projectileSet(0), _showObstacles(false), _showInfoOnCursor(false)
+	_unitDying(false), _smoothingEngaged(false), _flashScreen(false), _bgColor(15), _projectileSet(0), _showObstacles(false), _showInfoOnCursor(false),
+	_tileIdsOn(TIDM_THREES)
 {
 	// TODO: extract to a better place later
 	for (const auto& pair : Options::mods)
@@ -883,7 +884,7 @@ void Map::drawTerrain(Surface *surface)
 
 	bool pathfinderTurnedOn = _save->getPathfinding()->isPathPreviewed();
 
-	if (!_waypoints.empty() || (pathfinderTurnedOn && (_previewSettingTu || _previewSettingEnergy)))
+	if (!_waypoints.empty() || _tileIdsOn != TIDM_NONE || (pathfinderTurnedOn && (_previewSettingTu || _previewSettingEnergy)))
 	{
 		_numWaypid = new NumberText(15, 15, 20, 30);
 		_numWaypid->setPalette(getPalette());
@@ -906,6 +907,7 @@ void Map::drawTerrain(Surface *surface)
 			tile = _save->getTile(mapPosition);
 			for (int itX = beginX; itX < endX; itX++, mapPosition.x++, tile++)
 			{
+				bool renderingNumbers = false;
 				_camera->convertMapToScreen(mapPosition, &screenPosition);
 				screenPosition += cameraPos;
 
@@ -1693,6 +1695,59 @@ void Map::drawTerrain(Surface *surface)
 			_numWaypid->setBordered(false); // make sure we remove the border in case it's being used for missile waypoints.
 		}
 	}
+
+	if (_tileIdsOn != TIDM_NONE)
+	{
+		if (_numWaypid)
+		{
+			_numWaypid->setBordered(false); // give it a border for the pathfinding display, makes it more visible on snow, etc.
+		}
+		int itZ = _camera->getViewLevel();
+		int mcolor = _messageColor + 1;
+
+		int incrementValue = _tileIdsOn == TIDM_EVENS ? 2 : 1;
+		for (int itX = beginX; itX <= endX; itX += incrementValue)
+		{
+			for (int itY = beginY; itY <= endY; itY += incrementValue)
+			{
+				mapPosition = Position(itX, itY, itZ);
+				_camera->convertMapToScreen(mapPosition, &screenPosition);
+				screenPosition += _camera->getMapOffset();
+
+				// only render cells that are entirely inside the surface
+				if (screenPosition.x >= 0 && screenPosition.x <= surface->getWidth() - _spriteWidth &&
+					screenPosition.y >= -_spriteHeight * 0.5 && screenPosition.y <= surface->getHeight() )
+				{
+					if (_tileIdsOn == TIDM_EDGE) //if edge mode, only close to edge
+					{
+						if (screenPosition.x >= _spriteWidth * 0.5 && screenPosition.x <= surface->getWidth() - _spriteWidth * 1.5  &&
+							screenPosition.y >= -_spriteHeight * 0.25 && screenPosition.y < surface->getHeight() - _spriteHeight * 0.25)
+						{
+							continue;
+						}
+					}
+
+					tile = _save->getTile(mapPosition);
+					if (!tile || tile->getPreview() != -1)
+						continue;
+					int offX = itX > 9 ? 5 : 3;
+					int offY = itY > 9 ? 5 : 3;
+					if (itX > 99)
+						offX = 1;
+					if (itY > 99)
+						offY = 1;
+					int adjustment = -tile->getTerrainLevel();
+					
+					_numWaypid->setValue(itX);
+					_numWaypid->draw();
+					_numWaypid->blitNShade(surface, screenPosition.x + 16 - offX, screenPosition.y + (22 - adjustment), 0, false, mcolor);
+					_numWaypid->setValue(itY);
+					_numWaypid->draw();
+					_numWaypid->blitNShade(surface, screenPosition.x + 16 - offY, screenPosition.y + (29 - adjustment), 0, false, mcolor);
+				}
+			}
+		}
+	}	
 
 	auto* selectedUnit = _save->getSelectedUnit();
 	if (selectedUnit && (_save->getSide() == FACTION_PLAYER || _save->getDebugMode()) && selectedUnit->getPosition().z <= _camera->getViewLevel())

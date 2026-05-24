@@ -43,6 +43,7 @@ class UnitSprite;
 
 enum CursorType { CT_NONE, CT_NORMAL, CT_AIM, CT_PSI, CT_WAYPOINT, CT_THROW };
 enum TilePart : int;
+enum TileIDMode { TIDM_NONE = 0, TIDM_ALL = 1, TIDM_EDGE = 2, TIDM_EVENS = 3, TIDM_THREES = 4 };
 
 /**
  * Helper class that returns all important data about the unit movement
@@ -103,6 +104,7 @@ private:
 	bool _previewSettingArrows, _previewSettingTu, _previewSettingEnergy;
 	Text *_txtAccuracy;
 	SurfaceSet *_projectileSet;
+	TileIDMode _tileIdsOn;
 
 	void drawUnit(UnitSprite &unitSprite, Tile *unitTile, Tile *currTile, Position tileScreenPosition, bool topLayer, BattleUnit* movingUnit = nullptr);
 	void drawTerrain(Surface *surface);
