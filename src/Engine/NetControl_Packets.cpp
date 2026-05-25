@@ -15,6 +15,8 @@
 #include "../Engine/Language.h"
 #include "Screen.h"
 #include "Action.h"
+#include "../Battlescape/BattlescapeState.h"
+#include "../Battlescape/Map.h"
 
 namespace OpenXcom
 {
@@ -92,6 +94,13 @@ namespace NetControlPackets
 					{
 						NetControl_MoveCursor* rotate = (NetControl_MoveCursor*)buffer;
 						rotate->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::BS_SET_LABEL_MODE:
+					if (packetSize >= sizeof(NetControl_BSSetLabelMode))
+					{
+						NetControl_BSSetLabelMode* setLabel = (NetControl_BSSetLabelMode*)buffer;
+						setLabel->_Execute(nc, game);
 					}
 					break;
 				}
@@ -435,6 +444,21 @@ namespace NetControlPackets
 			SDL_WarpMouse(action.getLeftBlackBand() + action.getXMouse(), action.getTopBlackBand() + action.getYMouse());
 		}
 
+	}
+
+	void NetControl_BSSetLabelMode::_Execute(NetControl* nc, Game* game)
+	{
+		BattlescapeState* state = dynamic_cast<BattlescapeState*>(game->peekState());
+		if (state == nullptr)
+		{
+			return;
+		}
+		Map * map = state->getMap();
+		if (map == nullptr)
+		{
+			return;
+		}
+		map->setTileIdMode((TileIDMode)labelMode);
 	}
 	}
 }

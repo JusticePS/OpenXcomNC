@@ -1705,7 +1705,19 @@ void Map::drawTerrain(Surface *surface)
 		int itZ = _camera->getViewLevel();
 		int mcolor = _messageColor + 1;
 
-		int incrementValue = _tileIdsOn == TIDM_EVENS ? 2 : 1;
+		int incrementValue;
+		switch(_tileIdsOn)
+		{
+		case TIDM_EVENS:
+			incrementValue = 2;
+			break;
+		case TIDM_THREES:
+			incrementValue = 3;
+			break;
+		default:
+			incrementValue = 1;
+			break;
+		}
 		for (int itX = beginX; itX <= endX; itX += incrementValue)
 		{
 			for (int itY = beginY; itY <= endY; itY += incrementValue)
@@ -2672,6 +2684,18 @@ void Map::disableObstacles(void)
 	if (_obstacleTimer)
 	{
 		_obstacleTimer->stop();
+	}
+}
+
+void Map::setTileIdMode(TileIDMode newMode)
+{
+	if (newMode == -1)
+	{
+		_tileIdsOn = (TileIDMode)((_tileIdsOn + 1) % TIDM_COUNT);
+	}
+	else if (newMode < TIDM_COUNT && newMode >= 0 )
+	{
+		_tileIdsOn = newMode;
 	}
 }
 

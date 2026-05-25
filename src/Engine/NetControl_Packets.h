@@ -28,6 +28,7 @@ namespace NetControlPackets
 		UI_RAW_TEXT = 15,
 		GEOSCAPE_ROTATE = 16,
 		MOVE_CURSOR = 17,
+		BS_SET_LABEL_MODE = 18,
 	};
 
 
@@ -224,11 +225,19 @@ struct NetControl_GeoscapeRotate : NetControl_PacketBase
 
 struct NetControl_MoveCursor : NetControl_PacketBase
 {
-  public:
-	int xpos;
-	int ypos;
+	public:
+		int xpos;
+		int ypos;
 
-	void _Execute(NetControl* nc, Game* game);
+		void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_BSSetLabelMode : NetControl_PacketBase
+{
+	public:
+		int8_t labelMode;
+
+		void _Execute(NetControl* nc, Game* game);
 };
 
 #pragma pack(pop)
