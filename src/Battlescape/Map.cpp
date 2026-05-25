@@ -106,10 +106,10 @@ namespace OpenXcom
  */
 Map::Map(Game *game, int width, int height, int x, int y, int visibleMapHeight) : InteractiveSurface(width, height, x, y),
 	_game(game), _isTFTD(false), _arrow(0), _anyIndicator(false), _isAltPressed(false), _isCtrlPressed(false),
-	_selectorX(0), _selectorY(0), _mouseX(0), _mouseY(0), _cursorType(CT_NORMAL), _cursorSize(1), _animFrame(0),
+	_selectorX(0), _selectorY(0), _cursorMouseDecoupled(false), _mouseX(0), _mouseY(0), _cursorType(CT_NORMAL), _cursorSize(1), _animFrame(0),
 	_projectile(0), _followProjectile(true), _projectileInFOV(false), _explosionInFOV(false), _launch(false), _visibleMapHeight(visibleMapHeight),
 	_unitDying(false), _smoothingEngaged(false), _flashScreen(false), _bgColor(15), _projectileSet(0), _showObstacles(false), _showInfoOnCursor(false),
-	_tileIdsOn(TIDM_THREES)
+	_tileIdsOn(TIDM_THREES), _tileIdColor(-1)
 {
 	// TODO: extract to a better place later
 	for (const auto& pair : Options::mods)
@@ -950,7 +950,7 @@ void Map::drawTerrain(Surface *surface)
 					auto* unit = tile->getUnit();
 
 					// Draw cursor back
-					if (_cursorType != CT_NONE && _selectorX > itX - _cursorSize && _selectorY > itY - _cursorSize && _selectorX < itX+1 && _selectorY < itY+1 && !_save->getBattleState()->getMouseOverIcons())
+					if (_cursorType != CT_NONE && _selectorX > itX - _cursorSize && _selectorY > itY - _cursorSize && _selectorX < itX+1 && _selectorY < itY+1 && (_cursorMouseDecoupled || !_save->getBattleState()->getMouseOverIcons()))
 					{
 						if (_camera->getViewLevel() == itZ)
 						{
@@ -1319,7 +1319,7 @@ void Map::drawTerrain(Surface *surface)
 						}
 					}
 					// Draw cursor front
-					if (_cursorType != CT_NONE && _selectorX > itX - _cursorSize && _selectorY > itY - _cursorSize && _selectorX < itX+1 && _selectorY < itY+1 && !_save->getBattleState()->getMouseOverIcons())
+					if (_cursorType != CT_NONE && _selectorX > itX - _cursorSize && _selectorY > itY - _cursorSize && _selectorX < itX+1 && _selectorY < itY+1 && (_cursorMouseDecoupled || !_save->getBattleState()->getMouseOverIcons()))
 					{
 						if (_camera->getViewLevel() == itZ)
 						{
@@ -1704,6 +1704,11 @@ void Map::drawTerrain(Surface *surface)
 		}
 		int itZ = _camera->getViewLevel();
 		int mcolor = _messageColor + 1;
+		if (_tileIdColor != -1)
+		{
+			mcolor = _tileIdColor;
+		}
+		_numWaypid->setColor(mcolor);
 
 		int incrementValue;
 		switch(_tileIdsOn)
@@ -1912,6 +1917,10 @@ void Map::drawTerrain(Surface *surface)
 void Map::mousePress(Action *action, State *state)
 {
 	InteractiveSurface::mousePress(action, state);
+	if (action->getDetails()->button.which == 0)
+	{
+		_cursorMouseDecoupled = false;
+	}
 	_camera->mousePress(action, state);
 }
 
@@ -2069,12 +2078,33 @@ void Map::mouseOver(Action *action, State *state)
  */
 void Map::setSelectorPosition(int mx, int my)
 {
+	if (_cursorMouseDecoupled)
+		return;
+
 	int oldX = _selectorX, oldY = _selectorY;
 
 	_camera->convertScreenToMap(mx, my + _spriteHeight/4, &_selectorX, &_selectorY);
 
 	if (oldX != _selectorX || oldY != _selectorY)
 	{
+		_redraw = true;
+	}
+}
+
+/**
+ * Sets the selector to a certain tile on the map.
+ * @param m map x position.
+ * @param m map y position.
+ */
+void Map::setSelectorPositionMapCoords(int x, int y)
+{
+	_cursorMouseDecoupled = true;
+	x = Clamp(x, 0, _save->getMapSizeX() - 1);
+	y = Clamp(y, 0, _save->getMapSizeY() - 1);
+	if (x != _selectorX || y != _selectorY)
+	{
+		_selectorX = x;
+		_selectorY = y;
 		_redraw = true;
 	}
 }
@@ -2687,7 +2717,7 @@ void Map::disableObstacles(void)
 	}
 }
 
-void Map::setTileIdMode(TileIDMode newMode)
+void Map::setTileIdMode(TileIDMode newMode, int color)
 {
 	if (newMode == -1)
 	{
@@ -2696,6 +2726,10 @@ void Map::setTileIdMode(TileIDMode newMode)
 	else if (newMode < TIDM_COUNT && newMode >= 0 )
 	{
 		_tileIdsOn = newMode;
+	}
+	if (color != -1)
+	{
+		_tileIdColor = color;
 	}
 }
 

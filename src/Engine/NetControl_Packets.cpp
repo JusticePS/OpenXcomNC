@@ -103,6 +103,14 @@ namespace NetControlPackets
 						setLabel->_Execute(nc, game);
 					}
 					break;
+					break;
+				case NetControlPacketTypes::BS_TARGET:
+					if (packetSize >= sizeof(NetControl_BSTarget))
+					{
+						NetControl_BSTarget* target = (NetControl_BSTarget*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
 				}
 			}
 		}
@@ -346,6 +354,7 @@ namespace NetControlPackets
 				simEv.button.button = SDL_BUTTON_LEFT;
 				simEv.button.x = xpos;
 				simEv.button.y = ypos;
+				simEv.button.which = 1;
 				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
 				action.setMouseAction(xpos, ypos, 0, 0);
 				SDL_WarpMouse(action.getLeftBlackBand() + action.getXMouse(), action.getTopBlackBand() + action.getYMouse() );
@@ -358,6 +367,7 @@ namespace NetControlPackets
 				simEv.button.button = SDL_BUTTON_LEFT;
 				simEv.button.x = xpos;
 				simEv.button.y = ypos;
+				simEv.button.which = 1;
 				Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
 				action.setMouseAction(xpos, ypos, 0, 0);
 				state->handle(&action);
@@ -458,7 +468,60 @@ namespace NetControlPackets
 		{
 			return;
 		}
-		map->setTileIdMode((TileIDMode)labelMode);
+		map->setTileIdMode((TileIDMode)labelMode, color);
+	}
+
+	void NetControl_BSTarget::_Execute(NetControl* nc, Game* game)
+	{
+		BattlescapeState* state = dynamic_cast<BattlescapeState*>(game->peekState());
+		if (state == nullptr)
+		{
+			return;
+		}
+		Map* map = state->getMap();
+		if (map == nullptr)
+		{
+			return;
+		}
+		if (xpos >= 0 && ypos >= 0)
+		{
+			map->setSelectorPositionMapCoords(xpos, ypos);
+		}
+		SDL_Event simEv;
+		simEv.type = SDL_MOUSEBUTTONUP;
+		
+		simEv.button.x = xpos;
+		simEv.button.y = ypos;
+		simEv.button.which = 127;
+
+		bool doubleclick = false;
+
+		switch ((TargetModes)targetMode)
+		{
+
+		case TargetModes::BTM_LCLICK: //left click
+			simEv.button.button = SDL_BUTTON_LEFT;
+			break;
+		case TargetModes::BTM_RCLICK: //right click
+			simEv.button.button = SDL_BUTTON_RIGHT;
+			break;
+		case TargetModes::BTM_DCLICK: // double click
+			simEv.button.button = SDL_BUTTON_LEFT;
+			doubleclick = true;
+			break;
+		case TargetModes::BTM_MOVE: // do nothing, already moved
+		default:
+			return;
+		}
+
+		Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
+		action.setMouseAction(0, 0, 0, 0);
+		
+		state->mapClick(&action);
+		if (doubleclick)
+		{
+			state->mapClick(&action);
+		}
 	}
 	}
 }

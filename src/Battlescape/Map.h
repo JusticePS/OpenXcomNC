@@ -80,6 +80,7 @@ private:
 	bool _anyIndicator, _isAltPressed, _isCtrlPressed;
 	int _spriteWidth, _spriteHeight;
 	int _selectorX, _selectorY;
+	bool _cursorMouseDecoupled;
 	int _mouseX, _mouseY;
 	CursorType _cursorType;
 	int _cursorSize;
@@ -105,6 +106,7 @@ private:
 	Text *_txtAccuracy;
 	SurfaceSet *_projectileSet;
 	TileIDMode _tileIdsOn;
+	int _tileIdColor;
 
 	void drawUnit(UnitSprite &unitSprite, Tile *unitTile, Tile *currTile, Position tileScreenPosition, bool topLayer, BattleUnit* movingUnit = nullptr);
 	void drawTerrain(Surface *surface);
@@ -144,6 +146,8 @@ public:
 	void animate(bool redraw);
 	/// Sets the battlescape selector position relative to mouse position.
 	void setSelectorPosition(int mx, int my);
+	/// Sets the selector position using map coordinates (on current z level)
+	void setSelectorPositionMapCoords(int x, int y);
 	/// Gets the currently selected position.
 	void getSelectorPosition(Position *pos) const;
 	/// Calculates the offset of a soldier, when it is walking in the middle of 2 tiles.
@@ -220,7 +224,7 @@ public:
 	/// Disables obstacle markers.
 	void disableObstacles();
 	/// Set tile ID mode
-	void setTileIdMode(TileIDMode newMode);
+	void setTileIdMode(TileIDMode newMode, int color);
 };
 
 }

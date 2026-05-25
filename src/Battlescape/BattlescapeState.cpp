@@ -1079,7 +1079,7 @@ void BattlescapeState::mapClick(Action *action)
 	}
 
 	// don't handle mouseclicks over the buttons (it overlaps with map surface)
-	if (_mouseOverIcons) return;
+	if (_mouseOverIcons && action->getDetails()->button.which < 127) return;
 
 
 	// don't accept leftclicks if there is no cursor or there is an action busy

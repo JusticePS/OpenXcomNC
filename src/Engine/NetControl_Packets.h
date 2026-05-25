@@ -29,6 +29,7 @@ namespace NetControlPackets
 		GEOSCAPE_ROTATE = 16,
 		MOVE_CURSOR = 17,
 		BS_SET_LABEL_MODE = 18,
+		BS_TARGET = 19,
 	};
 
 
@@ -236,8 +237,27 @@ struct NetControl_BSSetLabelMode : NetControl_PacketBase
 {
 	public:
 		int8_t labelMode;
+		int color;
 
 		void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_BSTarget : NetControl_PacketBase
+{
+  public:
+	int xpos;
+	int ypos;
+	int8_t targetMode;
+
+	void _Execute(NetControl* nc, Game* game);
+
+	enum TargetModes
+	{
+		BTM_MOVE = 0,
+		BTM_LCLICK = 1,
+		BTM_RCLICK = 2,
+		BTM_DCLICK = 3, 
+	};
 };
 
 #pragma pack(pop)
