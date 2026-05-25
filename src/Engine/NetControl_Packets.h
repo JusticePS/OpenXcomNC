@@ -256,7 +256,8 @@ struct NetControl_BSTarget : NetControl_PacketBase
 		BTM_MOVE = 0,
 		BTM_LCLICK = 1,
 		BTM_RCLICK = 2,
-		BTM_DCLICK = 3, 
+		BTM_DCLICK = 3,
+		BTM_CCLICK = 4, 
 	};
 };
 

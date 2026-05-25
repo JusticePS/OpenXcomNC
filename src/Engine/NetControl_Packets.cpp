@@ -495,6 +495,7 @@ namespace NetControlPackets
 		simEv.button.which = 127;
 
 		bool doubleclick = false;
+		bool controlClick = false;
 
 		switch ((TargetModes)targetMode)
 		{
@@ -509,6 +510,10 @@ namespace NetControlPackets
 			simEv.button.button = SDL_BUTTON_LEFT;
 			doubleclick = true;
 			break;
+		case TargetModes::BTM_CCLICK: // double click
+			simEv.button.button = SDL_BUTTON_LEFT;
+			controlClick = true;
+			break;
 		case TargetModes::BTM_MOVE: // do nothing, already moved
 		default:
 			return;
@@ -516,12 +521,17 @@ namespace NetControlPackets
 
 		Action action = Action(&simEv, game->getScreen()->getXScale(), game->getScreen()->getYScale(), game->getScreen()->getCursorTopBlackBand(), game->getScreen()->getCursorLeftBlackBand());
 		action.setMouseAction(0, 0, 0, 0);
-		
+		bool wasCtrlPressed = game->getCtrlPressedFlag();
+		game->setCtrlPressedFlag(controlClick);
+
+
 		state->mapClick(&action);
 		if (doubleclick)
 		{
 			state->mapClick(&action);
 		}
+		game->setCtrlPressedFlag(wasCtrlPressed);
+
 	}
 	}
 }
