@@ -17,6 +17,7 @@
 #include "Action.h"
 #include "../Battlescape/BattlescapeState.h"
 #include "../Battlescape/Map.h"
+#include "../Battlescape/Camera.h"
 
 namespace OpenXcom
 {
@@ -103,7 +104,6 @@ namespace NetControlPackets
 						setLabel->_Execute(nc, game);
 					}
 					break;
-					break;
 				case NetControlPacketTypes::BS_TARGET:
 					if (packetSize >= sizeof(NetControl_BSTarget))
 					{
@@ -111,6 +111,14 @@ namespace NetControlPackets
 						target->_Execute(nc, game);
 					}
 					break;
+				case NetControlPacketTypes::BS_CAMERA:
+					if (packetSize >= sizeof(NetControl_BSCamera))
+					{
+						NetControl_BSCamera* target = (NetControl_BSCamera*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+
 				}
 			}
 		}
@@ -532,6 +540,59 @@ namespace NetControlPackets
 		}
 		game->setCtrlPressedFlag(wasCtrlPressed);
 
+	}
+
+	void NetControl_BSCamera::_Execute(NetControl* nc, Game* game)
+	{
+		BattlescapeState* state = dynamic_cast<BattlescapeState*>(game->peekState());
+		if (state == nullptr)
+		{
+			return;
+		}
+		Map* map = state->getMap();
+		if (map == nullptr)
+		{
+			return;
+		}
+
+		Camera* cam = map->getCamera();
+		if (cam == nullptr)
+		{
+			return;
+		}
+
+		//x, y, z move or position based on mode flags
+		Position pos = cam->getCenterPosition();
+
+		if (mode & ModeFlags::BCM_MOVEXABS)
+		{
+			pos.x = x;
+		}
+		else
+		{
+			pos.x += x;
+		}
+
+		if (mode & ModeFlags::BCM_MOVEYABS)
+		{
+			pos.y = y;
+		}
+		else
+		{
+			pos.y += y;
+		}
+
+		if (mode & ModeFlags::BCM_MOVEZABS)
+		{
+			pos.z = z;
+		}
+		else
+		{
+			pos.z += z;
+		}
+	
+
+		cam->centerOnPosition(pos);
 	}
 	}
 }

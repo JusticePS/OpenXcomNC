@@ -30,6 +30,7 @@ namespace NetControlPackets
 		MOVE_CURSOR = 17,
 		BS_SET_LABEL_MODE = 18,
 		BS_TARGET = 19,
+		BS_CAMERA = 20,
 	};
 
 
@@ -258,6 +259,24 @@ struct NetControl_BSTarget : NetControl_PacketBase
 		BTM_RCLICK = 2,
 		BTM_DCLICK = 3,
 		BTM_CCLICK = 4, 
+	};
+};
+
+struct NetControl_BSCamera : NetControl_PacketBase
+{
+  public:
+	int x;
+	int y;
+	int z;
+	int8_t mode;
+
+	void _Execute(NetControl* nc, Game* game);
+
+	enum ModeFlags
+	{
+		BCM_MOVEXABS = 1 << 0,
+		BCM_MOVEYABS = 1 << 1,
+		BCM_MOVEZABS = 1 << 2,
 	};
 };
 

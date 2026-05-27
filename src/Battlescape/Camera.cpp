@@ -428,7 +428,8 @@ void Camera::centerOnPosition(Position mapPos, bool redraw)
 	_mapOffset.x = -(screenPos.x - (_screenWidth / 2));
 	_mapOffset.y = -(screenPos.y - (_visibleMapHeight / 2));
 
-	_mapOffset.z = _center.z;
+	_mapOffset.z = Clamp<int>(mapPos.z, 0, _mapsize_z - 1);
+	_center.z = _mapOffset.z;
 	if (redraw) _map->draw();
 }
 
