@@ -47,6 +47,7 @@ protected:
 	ActionHandler _in, _over, _out;
 	std::map<SDLKey, ActionHandler> _keyPress, _keyRelease;
 	bool _isHovered, _isFocused, _listButton, _tftdMode;
+	int _access_level_required;
 
 	/// Is this mouse button pressed?
 	bool isButtonPressed(Uint8 button = 0) const;
@@ -56,7 +57,7 @@ protected:
 	void setButtonPressed(Uint8 button, bool pressed);
 public:
 	/// Creates a new interactive surface with the specified size and position.
-	InteractiveSurface(int width, int height, int x = 0, int y = 0);
+	InteractiveSurface(int width, int height, int x = 0, int y = 0, int access_level_required = 0);
 	/// Cleans up the interactive surface.
 	virtual ~InteractiveSurface();
 	/// Sets the surface's visibility.

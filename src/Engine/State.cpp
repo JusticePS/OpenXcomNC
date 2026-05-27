@@ -698,26 +698,26 @@ int State::getCursorY() const
 }
 
 // Finds a textButton with a specific label and sends a mouse press
-void State::pressSurfaceWithLabel(const std::string& labelText)
+void State::pressSurfaceWithLabel(const std::string& labelText, int access_level)
 {
 	for (auto* surface : _surfaces)
 	{
-		if (surface->pressIfLabelMatches(labelText, this, true, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
+		if (surface->pressIfLabelMatches(access_level, labelText, this, true, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
 			return;
 	}
 	for (auto* surface : _surfaces)
 	{
-		if (surface->pressIfLabelMatches(labelText, this, false, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
+		if (surface->pressIfLabelMatches(access_level, labelText, this, false, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
 			return;
 	}
 	for (auto* surface : _surfaces)
 	{
-		if (surface->pressIfTooltipMatches(labelText, this, true, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
+		if (surface->pressIfTooltipMatches(access_level, labelText, this, true, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
 			return;
 	}
 	for (auto* surface : _surfaces)
 	{
-		if (surface->pressIfTooltipMatches(labelText, this, false, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
+		if (surface->pressIfTooltipMatches(access_level, labelText, this, false, _game->getScreen()->getXScale(), _game->getScreen()->getYScale(), _game->getScreen()->getCursorTopBlackBand(), _game->getScreen()->getCursorLeftBlackBand()))
 			return;
 	}
 }

@@ -41,7 +41,7 @@ protected:
 	Surface *_altSurface;
 public:
 	/// Creates a new image button with the specified size and position.
-	BattlescapeButton(int width, int height, int x = 0, int y = 0);
+	BattlescapeButton(int width, int height, int x = 0, int y = 0, int access_level = 0);
 	/// Cleans up the image button.
 	virtual ~BattlescapeButton();
 	/// Sets the image button's color.
@@ -69,7 +69,7 @@ public:
 	/// Alters both versions of the button's Y pos.
 	void setY(int y) override;
 	/// Press if tooltip matches button
-	bool pressIfTooltipMatches(const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) override;
+	bool pressIfTooltipMatches(int access_level, const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) override;
 };
 
 }

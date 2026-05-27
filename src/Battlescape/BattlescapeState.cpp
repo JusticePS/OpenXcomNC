@@ -155,7 +155,7 @@ BattlescapeState::BattlescapeState() :
 	_btnNextSoldier = new BattlescapeButton(32, 16, x + 176, y);
 	_btnNextStop = new BattlescapeButton(32, 16, x + 176, y + 16);
 	_btnShowLayers = new BattlescapeButton(32, 16, x + 208, y);
-	_btnHelp = new BattlescapeButton(32, 16, x + 208, y + 16);
+	_btnHelp = new BattlescapeButton(32, 16, x + 208, y + 16, 50);
 	_btnEndTurn = new BattlescapeButton(32, 16, x + 240, y);
 	_btnAbort = new BattlescapeButton(32, 16, x + 240, y + 16);
 	_btnStats = new InteractiveSurface(164, 23, x + 107, y + 33);

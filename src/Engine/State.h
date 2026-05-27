@@ -153,7 +153,7 @@ public:
 	int getCursorY() const;
 
 	// Finds a surface with a specific label and sends a mouse press
-	void pressSurfaceWithLabel(const std::string& labelText);
+	void pressSurfaceWithLabel(const std::string& labelText, int access_level);
 };
 
 }

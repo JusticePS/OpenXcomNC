@@ -211,7 +211,7 @@ public:
 	/// Treat separators as spaces (false) or as normal text (true)?
 	void setIgnoreSeparators(bool ignoreSeparators);
 	/// Sends a mousepress if the label matches this (in classes where this is overridden)
-	bool pressIfLabelMatches(const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband);
+	bool pressIfLabelMatches(int access_level, const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband);
 };
 
 }

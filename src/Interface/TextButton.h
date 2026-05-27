@@ -50,7 +50,7 @@ protected:
 public:
 	static Sound *soundPress;
 	/// Creates a new text button with the specified size and position.
-	TextButton(int width, int height, int x = 0, int y = 0);
+	TextButton(int width, int height, int x = 0, int y = 0, int access_level_required = 0);
 	/// Cleans up the text button.
 	~TextButton();
 	/// Sets the text button's color.
@@ -89,7 +89,7 @@ public:
 	void setHeight(int height) override;
 	void setGeoscapeButton(bool geo);
 	/// Sends a mousepress if the label matches this (in classes where this is overridden)
-	bool pressIfLabelMatches(const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband);
+	bool pressIfLabelMatches(int access_level, const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband);
 };
 
 }

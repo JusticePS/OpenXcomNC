@@ -164,7 +164,7 @@ GeoscapeState::GeoscapeState() : _pause(false), _zoomInEffectDone(false), _zoomO
 	_btnBases = new TextButton(63, 11, screenWidth-63, screenHeight/2-88);
 	_btnGraphs = new TextButton(63, 11, screenWidth-63, screenHeight/2-76);
 	_btnUfopaedia = new TextButton(63, 11, screenWidth-63, screenHeight/2-64);
-	_btnOptions = new TextButton(63, 11, screenWidth-63, screenHeight/2-52);
+	_btnOptions = new TextButton(63, 11, screenWidth-63, screenHeight/2-52, 50);
 	_btnFunding = new TextButton(63, 11, screenWidth-63, screenHeight/2-40);
 
 	_btn5Secs = new TextButton(31, 13, screenWidth-63, screenHeight/2+12);

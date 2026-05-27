@@ -1390,8 +1390,10 @@ void TextList::setIgnoreSeparators(bool ignoreSeparators)
 	_ignoreSeparators = ignoreSeparators;
 }
 
-bool TextList::pressIfLabelMatches(const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
+bool TextList::pressIfLabelMatches(int access_level, const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
 {
+	if (access_level < _access_level_required)
+		return false;
 	size_t plus_index = textLabel.find('+');
 	size_t minus_index = textLabel.find('-');
 	std::string num_substr;

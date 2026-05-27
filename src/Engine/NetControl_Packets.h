@@ -204,6 +204,7 @@ public:
 	int16_t keyNumber;
 	int xpos;
 	int ypos;
+	int access_level;
 
 	void _Execute(NetControl* nc, Game* game);
 };

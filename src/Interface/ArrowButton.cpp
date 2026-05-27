@@ -373,8 +373,10 @@ void ArrowButton::mouseClick(Action *action, State *state)
 }
 
 /// Sends a mousepress if this matches up/down/left/right
-bool ArrowButton::pressIfLabelMatches(const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
+bool ArrowButton::pressIfLabelMatches(int access_level, const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
 {
+	if (access_level < _access_level_required)
+		return false;
 	std::string arrow_text = std::string("");
 	switch (_shape)
 	{

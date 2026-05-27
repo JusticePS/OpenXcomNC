@@ -37,7 +37,7 @@ Sound *TextButton::soundPress;
  * @param x X position in pixels.
  * @param y Y position in pixels.
  */
-TextButton::TextButton(int width, int height, int x, int y) : InteractiveSurface(width, height, x, y), _color(0), _group(0), _contrast(false), _geoscapeButton(false), _comboBox(0)
+TextButton::TextButton(int width, int height, int x, int y, int access_level_required) : InteractiveSurface(width, height, x, y, access_level_required), _color(0), _group(0), _contrast(false), _geoscapeButton(false), _comboBox(0)
 {
 	_text = new Text(width, height, 0, 0);
 	_text->setSmall();
@@ -359,8 +359,11 @@ void TextButton::setGeoscapeButton(bool geo)
 	_geoscapeButton = geo;
 }
 
-bool TextButton::pressIfLabelMatches(const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
+bool TextButton::pressIfLabelMatches(int access_level, const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
 {
+	if (access_level < _access_level_required)
+		return false;
+
 	const std::string& myText = _text->getText();
 	if( textLabel.size() <= myText.size() && std::equal(textLabel.begin(), textLabel.end(), myText.begin(), [](auto a, auto b)
 											 { return std::tolower(a) == std::tolower(b); }))

@@ -124,8 +124,10 @@ void ImageButton::toggle(bool press)
 	}
 }
 
-bool ImageButton::pressIfTooltipMatches(const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
+bool ImageButton::pressIfTooltipMatches(int access_level, const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
 {
+	if (access_level < _access_level_required)
+		return false;
 	auto tooltip = getTooltip();
 	tooltip = State::trStatic(tooltip);
 

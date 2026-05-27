@@ -407,7 +407,7 @@ namespace NetControlPackets
 		else if (label[0] != 0)
 		{
 			std::string labelText = std::string(label);
-			state->pressSurfaceWithLabel(labelText);
+			state->pressSurfaceWithLabel(labelText, access_level);
 		}
 	}
 

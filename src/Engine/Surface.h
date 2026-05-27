@@ -333,9 +333,9 @@ public:
 	virtual void setHighContrast(bool /*contrast*/) { /* empty by design */ };
 
 	/// Sends a mousepress if the label matches this (in classes where this is overridden)
-	virtual bool pressIfLabelMatches(const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) { return false; }
+	virtual bool pressIfLabelMatches(int access_level, const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) { return false; }
 	/// Sends a mousepress if the tooltip matches this (in classes where this is overridden)
-	virtual bool pressIfTooltipMatches(const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) { return false; }
+	virtual bool pressIfTooltipMatches(int access_level, const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) { return false; }
 };
 
 /**

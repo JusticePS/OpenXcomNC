@@ -71,10 +71,10 @@ MainMenuState::MainMenuState(bool updateCheck)
 	_btnNewGame = new TextButton(92, 20, 64, 90);
 	_btnNewBattle = new TextButton(92, 20, 164, 90);
 	_btnLoad = new TextButton(92, 20, 64, 118);
-	_btnOptions = new TextButton(92, 20, 164, 118);
-	_btnMods = new TextButton(92, 20, 64, 146);
-	_btnQuit = new TextButton(92, 20, 164, 146);
-	_btnUpdate = new TextButton(72, 16, 209, 27);
+	_btnOptions = new TextButton(92, 20, 164, 118, 50);
+	_btnMods = new TextButton(92, 20, 64, 146, 50);
+	_btnQuit = new TextButton(92, 20, 164, 146, 50);
+	_btnUpdate = new TextButton(72, 16, 209, 27, 50);
 	_txtUpdateInfo = new Text(320, 17, 0, 11);
 	_txtTitle = new Text(256, 30, 32, 45);
 

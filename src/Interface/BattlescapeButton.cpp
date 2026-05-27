@@ -29,7 +29,7 @@ namespace OpenXcom
  * @param x X position in pixels.
  * @param y Y position in pixels.
  */
-BattlescapeButton::BattlescapeButton(int width, int height, int x, int y) : InteractiveSurface(width, height, x, y), _color(0), _group(0), _inverted(false), _toggleMode(INVERT_NONE), _altSurface(0)
+BattlescapeButton::BattlescapeButton(int width, int height, int x, int y, int access_level) : InteractiveSurface(width, height, x, y, access_level), _color(0), _group(0), _inverted(false), _toggleMode(INVERT_NONE), _altSurface(0)
 {
 }
 
@@ -242,8 +242,10 @@ void BattlescapeButton::setY(int y)
 	}
 }
 
-bool BattlescapeButton::pressIfTooltipMatches(const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
+bool BattlescapeButton::pressIfTooltipMatches(int access_level, const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
 {
+	if (access_level < _access_level_required)
+		return false;
 	auto tooltip = getTooltip();
 	tooltip = State::trStatic(tooltip);
 
