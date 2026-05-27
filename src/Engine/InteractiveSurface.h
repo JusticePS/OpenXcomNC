@@ -112,6 +112,8 @@ public:
 	void setTFTDMode(bool mode);
 	/// checks if this is a TFTD mode surface.
 	bool isTFTDMode() const;
+	/// Press if tooltip matches button
+	bool pressIfTooltipMatches(int access_level, const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) override;
 };
 
 }

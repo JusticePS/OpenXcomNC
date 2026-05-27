@@ -68,8 +68,6 @@ public:
 	void setX(int x) override;
 	/// Alters both versions of the button's Y pos.
 	void setY(int y) override;
-	/// Press if tooltip matches button
-	bool pressIfTooltipMatches(int access_level, const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) override;
 };
 
 }

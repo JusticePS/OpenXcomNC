@@ -22,6 +22,7 @@
 #include "../Engine/Game.h"
 #include "../Mod/Mod.h"
 #include "../Mod/RuleInterface.h"
+#include "../Engine/Action.h"
 
 namespace OpenXcom
 {
@@ -186,5 +187,45 @@ void ActionMenuItem::mouseOut(Action *action, State *state)
 	InteractiveSurface::mouseOut(action, state);
 }
 
+bool ActionMenuItem::pressIfLabelMatches(int access_level, const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
+{
+	if (access_level < _access_level_required || _txtDescription == nullptr)
+		return false;
+	
+	const std::string& myText = _txtDescription->getText();
+	if (textLabel.size() <= myText.size() && std::equal(textLabel.begin(), textLabel.end(), myText.begin(), [](auto a, auto b)
+														{ return std::tolower(a) == std::tolower(b); }))
+	{
+		{
+			SDL_Event simEv;
+			simEv.type = SDL_MOUSEBUTTONDOWN;
+			simEv.button.button = SDL_BUTTON_LEFT;
+			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+			a.setSender(this);
+			mousePress(&a, state);
+		}
+
+		{
+			SDL_Event simEv;
+			simEv.type = SDL_MOUSEBUTTONUP;
+			simEv.button.button = SDL_BUTTON_LEFT;
+			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+			a.setSender(this);
+			mouseRelease(&a, state);
+		}
+
+		{
+			SDL_Event simEv;
+			simEv.type = SDL_MOUSEBUTTONUP;
+			simEv.button.button = SDL_BUTTON_LEFT;
+			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+			a.setSender(this);
+			mouseClick(&a, state);
+		}
+
+		return true;
+	}
+	return false;
+}
 
 }

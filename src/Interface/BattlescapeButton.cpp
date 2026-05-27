@@ -242,44 +242,4 @@ void BattlescapeButton::setY(int y)
 	}
 }
 
-bool BattlescapeButton::pressIfTooltipMatches(int access_level, const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband)
-{
-	if (access_level < _access_level_required)
-		return false;
-	auto tooltip = getTooltip();
-	tooltip = State::trStatic(tooltip);
-
-	const std::string& myText = tooltip;
-	if (textLabel.size() <= myText.size() && std::equal(textLabel.begin(), textLabel.end(), myText.begin(), [](auto a, auto b)
-														{ return std::tolower(a) == std::tolower(b); }))
-	{
-		{
-			SDL_Event simEv;
-			simEv.type = SDL_MOUSEBUTTONDOWN;
-			simEv.button.button = SDL_BUTTON_LEFT;
-			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
-			mousePress(&a, state);
-		}
-
-		{
-			SDL_Event simEv;
-			simEv.type = SDL_MOUSEBUTTONUP;
-			simEv.button.button = SDL_BUTTON_LEFT;
-			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
-			mouseRelease(&a, state);
-		}
-
-		{
-			SDL_Event simEv;
-			simEv.type = SDL_MOUSEBUTTONUP;
-			simEv.button.button = SDL_BUTTON_LEFT;
-			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
-			mouseClick(&a, state);
-		}
-
-		return true;
-	}
-	return false;
-}
-
 }

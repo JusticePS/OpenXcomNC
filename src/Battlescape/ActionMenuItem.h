@@ -66,7 +66,8 @@ public:
 	void mouseIn(Action *action, State *state) override;
 	/// Processes a mouse hover out event.
 	void mouseOut(Action *action, State *state) override;
-
+	/// press menu item if description matches
+	bool pressIfLabelMatches(int access_level, const std::string& textLabel, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) override;
 };
 
 }

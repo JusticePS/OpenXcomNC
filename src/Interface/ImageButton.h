@@ -52,8 +52,6 @@ public:
 	void mouseRelease(Action *action, State *state) override;
 	/// Invert a button explicitly either ON or OFF.
 	void toggle(bool invert);
-	/// Press if tooltip matches button
-	bool pressIfTooltipMatches(int access_level, const std::string& labelText, State* state, bool exactMatch, float xscale, float yscale, float topband, float leftband) override;
 };
 
 }
