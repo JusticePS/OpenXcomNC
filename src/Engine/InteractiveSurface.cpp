@@ -601,6 +601,7 @@ bool InteractiveSurface::pressIfTooltipMatches(int access_level, const std::stri
 			simEv.type = SDL_MOUSEBUTTONUP;
 			simEv.button.button = SDL_BUTTON_LEFT;
 			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+			a.setSender(this);
 			mouseClick(&a, state);
 		}
 

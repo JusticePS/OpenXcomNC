@@ -118,7 +118,34 @@ namespace NetControlPackets
 						target->_Execute(nc, game);
 					}
 					break;
-
+				case NetControlPacketTypes::GEOSCAPE_SHOW_CURSOR:
+					if (packetSize >= sizeof(NetControl_GeoscapeShowCursor))
+					{
+						NetControl_GeoscapeShowCursor* target = (NetControl_GeoscapeShowCursor*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::GEOSCAPE_HIDE_CURSOR:
+					if (packetSize >= sizeof(NetControl_GeoscapeHideCursor))
+					{
+						NetControl_GeoscapeHideCursor* target = (NetControl_GeoscapeHideCursor*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::GEOSCAPE_MOVE_CURSOR:
+					if (packetSize >= sizeof(NetControl_GeoscapeMoveCursor))
+					{
+						NetControl_GeoscapeMoveCursor* target = (NetControl_GeoscapeMoveCursor*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::GEOSCAPE_CLICK_CURSOR:
+					if (packetSize >= sizeof(NetControl_GeoscapeClickCursor))
+					{
+						NetControl_GeoscapeClickCursor* target = (NetControl_GeoscapeClickCursor*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
 				}
 			}
 		}
@@ -594,5 +621,45 @@ namespace NetControlPackets
 
 		cam->centerOnPosition(pos);
 	}
+
+	void NetControl_GeoscapeShowCursor::_Execute(NetControl* nc, Game* game)
+	{
+		if (game->getGeoscapeState() == nullptr)
+		{
+			return;
+		}
+
+		game->getGeoscapeState()->showNetCursor(xpos, ypos);
+	}
+
+	void NetControl_GeoscapeHideCursor::_Execute(NetControl* nc, Game* game)
+	{
+		if (game->getGeoscapeState() == nullptr)
+		{
+			return;
+		}
+
+		game->getGeoscapeState()->hideNetCursor();
+	}
+
+	void NetControl_GeoscapeMoveCursor::_Execute(NetControl* nc, Game* game)
+	{
+		if (game->getGeoscapeState() == nullptr)
+		{
+			return;
+		}
+
+		game->getGeoscapeState()->moveNetCursor(dx, dy);
+	}
+
+	void NetControl_GeoscapeClickCursor::_Execute(NetControl* nc, Game* game)
+	{
+		if (game->getGeoscapeState() == nullptr)
+		{
+			return;
+		}
+		game->getGeoscapeState()->clickNetCursor();
+	}
+
 	}
 }

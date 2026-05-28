@@ -135,6 +135,9 @@
 #include "../fmath.h"
 #include "../fallthrough.h"
 #include "../Engine/NetControl.h"
+#include "../Interface/Cursor.h"
+#include "BuildNewBaseState.h"
+#include "SelectDestinationState.h"
 
 namespace OpenXcom
 {
@@ -143,7 +146,7 @@ namespace OpenXcom
  * Initializes all the elements in the Geoscape screen.
  * @param game Pointer to the core game.
  */
-GeoscapeState::GeoscapeState() : _pause(false), _zoomInEffectDone(false), _zoomOutEffectDone(false), _minimizedDogfights(0), _slowdownCounter(0)
+GeoscapeState::GeoscapeState() : _pause(false), _zoomInEffectDone(false), _zoomOutEffectDone(false), _minimizedDogfights(0), _slowdownCounter(0), _netCursorEnabled(false)
 {
 	int screenWidth = Options::baseXGeoscape;
 	int screenHeight = Options::baseYGeoscape;
@@ -215,6 +218,8 @@ GeoscapeState::GeoscapeState() : _pause(false), _zoomInEffectDone(false), _zoomO
 	_cbxArea = new ComboBox(this, 48, 16, 206, 36);
 	_cbxCountry = new ComboBox(this, 150, 16, 0, 36);
 
+	_netCursor = new Cursor(9, 13, 0, 0, true);
+	_netCursor->setVisible(false);
 	// Set palette
 	setInterface("geoscape");
 
@@ -265,6 +270,8 @@ GeoscapeState::GeoscapeState() : _pause(false), _zoomInEffectDone(false), _zoomO
 	add(_cbxZone, "button", "geoscape");
 	add(_cbxArea, "button", "geoscape");
 	add(_cbxCountry, "button", "geoscape");
+
+	add(_netCursor);
 
 	// Set up objects
 	Surface *geobord = _game->getMod()->getSurface("GEOBORD.SCR");
@@ -724,6 +731,10 @@ void GeoscapeState::init()
 	_globe->rotateStop();
 	_globe->setFocus(true);
 	_globe->draw();
+
+	_netCursor->setPalette(_palette);
+	_netCursor->setColor(_cursorColor);
+	_netCursor->draw();
 
 	// Pop up save screen if it's a new ironman game
 	if (_game->getSavedGame()->isIronman() && _game->getSavedGame()->getName().empty())
@@ -5067,6 +5078,69 @@ void GeoscapeState::cbxCountryChange(Action *)
 		}
 	}
 	_txtDebug->setText(ss.str());
+}
+
+/// Shows the net cursor and starts ignoring mouse input
+void GeoscapeState::showNetCursor(int x, int y)
+{
+	_netCursorEnabled = true;
+	_netCursor->setVisible(true);
+	_netCursor->setPosition(x, y);
+}
+
+/// Hides the net cursor
+void GeoscapeState::hideNetCursor()
+{
+	_netCursorEnabled = false;
+	_netCursor->setVisible(false);
+}
+
+/// Shows the net cursor and starts ignoring mouse input
+void GeoscapeState::moveNetCursor(int dx, int dy)
+{
+	_netCursor->movePosition(dx, dy);
+}
+
+void GeoscapeState::clickNetCursor()
+{
+	if (!_netCursorEnabled)
+		return;
+
+	if (_game->isState(this))
+	{
+		std::vector<Target*> v = _globe->getTargets(_netCursor->getX(), _netCursor->getY(), false, 0);
+		if (!v.empty())
+		{
+			// Pass empty vector
+			std::vector<Craft*> crafts;
+			_game->pushState(new MultipleTargetsState(v, crafts, this, true));
+		}
+		return;
+	}
+
+	State* state = _game->peekState();
+	BuildNewBaseState* newBaseState = dynamic_cast<BuildNewBaseState*>(state);
+	SelectDestinationState* newDestState = dynamic_cast<SelectDestinationState*>(state);
+	if (newBaseState != nullptr || newDestState != nullptr)
+	{
+		SDL_Event simEv;
+		simEv.type = SDL_MOUSEBUTTONUP;
+
+		simEv.button.x = _netCursor->getX();
+		simEv.button.y = _netCursor->getY();
+		simEv.button.which = 127;
+
+		simEv.button.button = SDL_BUTTON_LEFT;
+		Action action = Action(&simEv, 1.0, 1.0, 0, 0);
+		action.setMouseAction(_netCursor->getX(), _netCursor->getY(), 0, 0);
+
+		if (newBaseState != nullptr)
+			newBaseState->globeClick(&action);
+		else if (newDestState != nullptr)
+			newDestState->globeClick(&action);
+
+	}
+	
 }
 
 }

@@ -87,6 +87,8 @@ public:
 	void resize(int &dX, int &dY) override;
 	/// Handler for clicking the Reinforcements Briefing button.
 	void btnBriefingReinforcementsClick(Action *action);
+	/// Continue on any press command
+	void pressSurfaceWithLabel(const std::string& labelText, int access_level) override;
 };
 
 }

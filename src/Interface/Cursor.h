@@ -33,10 +33,11 @@ class Cursor : public Surface
 {
 private:
 	Uint8 _color;
+	bool _ignoreMouse;
 
 public:
 	/// Creates a new cursor with the specified size and position.
-	Cursor(int width, int height, int x = 0, int y = 0);
+	Cursor(int width, int height, int x = 0, int y = 0, bool ignoreMouse = false);
 	/// Cleans up the cursor.
 	~Cursor();
 	/// Handles mouse events.
@@ -47,6 +48,10 @@ public:
 	Uint8 getColor() const;
 	/// Draws the cursor.
 	void draw() override;
+	/// Moves the cursor
+	void setPosition(int x, int y);
+	/// Moves the cursor
+	void movePosition(int dx, int dy);
 };
 
 }

@@ -34,7 +34,7 @@ namespace OpenXcom
  * @param x X position in pixels.
  * @param y Y position in pixels.
  */
-Cursor::Cursor(int width, int height, int x, int y) : Surface(width, height, x, y), _color(0)
+Cursor::Cursor(int width, int height, int x, int y, bool ignoreMouse) : Surface(width, height, x, y), _color(0), _ignoreMouse(ignoreMouse)
 {
 }
 
@@ -52,7 +52,7 @@ Cursor::~Cursor()
  */
 void Cursor::handle(Action *action)
 {
-	if (action->getDetails()->type == SDL_MOUSEMOTION)
+	if (!_ignoreMouse && action->getDetails()->type == SDL_MOUSEMOTION)
 	{
 		setX((int)floor((action->getDetails()->motion.x - action->getLeftBlackBand()) / action->getXScale()));
 		setY((int)floor((action->getDetails()->motion.y - action->getTopBlackBand()) / action->getYScale()));
@@ -102,4 +102,17 @@ void Cursor::draw()
 	unlock();
 }
 
+/// Moves the cursor
+void Cursor::setPosition(int x, int y)
+{
+	setX(x);
+	setY(y);
+}
+
+/// Moves the cursor
+void Cursor::movePosition(int dx, int dy)
+{
+	setX(getX() + dx);
+	setY(getY() + dy);
+}
 }

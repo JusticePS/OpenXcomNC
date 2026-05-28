@@ -1140,4 +1140,8 @@ bool NextTurnState::placeReinforcementNearFriend(BattleUnit *unit)
 	return false;
 }
 
+void NextTurnState::pressSurfaceWithLabel(const std::string& labelText, int access_level)
+{
+	close();
+}
 }

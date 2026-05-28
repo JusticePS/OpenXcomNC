@@ -38,6 +38,7 @@ class Base;
 class RuleMissionScript;
 class RuleEvent;
 class AlienBase;
+class Cursor;
 
 /**
  * Geoscape screen which shows an overview of
@@ -65,6 +66,10 @@ private:
 	std::vector<Craft*> _activeCrafts;
 	size_t _minimizedDogfights;
 	int _slowdownCounter;
+	bool _netCursorEnabled;
+	int _netCursorX;
+	int _netCursorY;
+	Cursor* _netCursor;
 
 	/// Update list of active crafts.
 	const std::vector<Craft*>* updateActiveCrafts();
@@ -198,6 +203,14 @@ public:
 	void determineAlienMissions(bool isNewMonth = true, const RuleEvent* eventRules = nullptr);
 	/// Rotate globe
 	void Rotate(int amount, bool northSouth);
+	/// Shows the net cursor and starts ignoring mouse input
+	void showNetCursor(int x, int y);
+	/// Hides the net cursor
+	void hideNetCursor();
+	/// Moves the net cursor
+	void moveNetCursor(int dx, int dy);
+	/// Clicks the cursor
+	void clickNetCursor();
 
   private:
 	bool attemptAlienRaceEvolution(int month, AlienBase* ab) const;

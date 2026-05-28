@@ -31,6 +31,10 @@ namespace NetControlPackets
 		BS_SET_LABEL_MODE = 18,
 		BS_TARGET = 19,
 		BS_CAMERA = 20,
+		GEOSCAPE_SHOW_CURSOR = 21,
+		GEOSCAPE_HIDE_CURSOR = 22,
+		GEOSCAPE_MOVE_CURSOR = 23,
+		GEOSCAPE_CLICK_CURSOR = 24,
 	};
 
 
@@ -279,6 +283,37 @@ struct NetControl_BSCamera : NetControl_PacketBase
 		BCM_MOVEYABS = 1 << 1,
 		BCM_MOVEZABS = 1 << 2,
 	};
+};
+
+struct NetControl_GeoscapeShowCursor : NetControl_PacketBase
+{
+  public:
+	int xpos;
+	int ypos;
+
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_GeoscapeMoveCursor : NetControl_PacketBase
+{
+  public:
+	int dx;
+	int dy;
+
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_GeoscapeHideCursor : NetControl_PacketBase
+{
+  public:
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_GeoscapeClickCursor : NetControl_PacketBase
+{
+  public:
+	int8_t button;
+	void _Execute(NetControl* nc, Game* game);
 };
 
 #pragma pack(pop)
