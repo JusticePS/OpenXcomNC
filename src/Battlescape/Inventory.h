@@ -126,6 +126,8 @@ private:
 	bool unload(bool quickUnload = false, BattleItem* itemToUnload = nullptr);
 	/// Checks whether the given item is visible with the current search string.
 	bool isInSearchString(BattleItem *item);
+	///
+	bool searchStringMatchesLocalName(BattleItem* item, bool* exact = nullptr, int* length = nullptr);
 	/// Arranges items on the ground.
 	void arrangeGround(int alterOffset = 0);
 	/// Attempts to place an item in an inventory slot.

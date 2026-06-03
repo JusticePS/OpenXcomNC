@@ -1269,19 +1269,8 @@ bool Inventory::unload(bool quickUnload, BattleItem* itemToUnload)
 	}
 }
 
-/**
-* Checks whether the given item is visible with the current search string.
-* @param item The item to check.
-* @return True if item should be shown. False otherwise.
-*/
-bool Inventory::isInSearchString(BattleItem *item)
+bool Inventory::searchStringMatchesLocalName(BattleItem* item, bool* exact, int* length)
 {
-	if (!_searchString.length())
-	{
-		// No active search string.
-		return true;
-	}
-
 	std::string itemLocalName;
 	if (!_game->getSavedGame()->isResearched(item->getRules()->getRequirements()))
 	{
@@ -1295,9 +1284,31 @@ bool Inventory::isInSearchString(BattleItem *item)
 	Unicode::upperCase(itemLocalName);
 	if (itemLocalName.find(_searchString) != std::string::npos)
 	{
+		if (exact != nullptr)
+			*exact = (itemLocalName == _searchString);
+		if (length != nullptr)
+			*length = itemLocalName.size();
 		// Name match.
 		return true;
 	}
+	return false;
+}
+
+/**
+* Checks whether the given item is visible with the current search string.
+* @param item The item to check.
+* @return True if item should be shown. False otherwise.
+*/
+bool Inventory::isInSearchString(BattleItem *item)
+{
+	if (!_searchString.length())
+	{
+		// No active search string.
+		return true;
+	}
+	if (searchStringMatchesLocalName(item))
+		return true;
+
 
 	// If present in the Ufopaedia, check categories for a match as well.
 	ArticleDefinition *articleID = _game->getMod()->getUfopaediaArticle(item->getRules()->getType());
@@ -1838,7 +1849,7 @@ bool Inventory::moveItem(const std::string& sectionMatchTextSrc, int srcX, int s
 		return false;
 	if (destInv->getSlots()->size() == 0)
 	{
-		if (tryPutInSlot(item, destInv, 0, 0))
+		if (tryPutInSlot(item, destInv, destX, destY))
 		{
 			return true;
 		}
@@ -1870,13 +1881,23 @@ bool Inventory::moveItemByName(const std::string& itemMatchText, const std::stri
 	RuleInventory* destInv = findSlot(sectionMatchTextDest);
 	if (destInv == nullptr)
 		return false;
-	for (const auto& destSlotInfo : *destInv->getSlots())
+	if (destInv->getSlots()->size() == 0)
 	{
-		if ((destSlotInfo.x == destX && destSlotInfo.y == destY) || destX == -1)
+		if (tryPutInSlot(item, destInv, destX, destY))
 		{
-			if (tryPutInSlot(item, destInv, destSlotInfo.x, destSlotInfo.y))
+			return true;
+		}
+	}
+	else
+	{
+		for (const auto& destSlotInfo : *destInv->getSlots())
+		{
+			if ((destSlotInfo.x == destX && destSlotInfo.y == destY) || destX == -1)
 			{
-				return true;
+				if (tryPutInSlot(item, destInv, destSlotInfo.x, destSlotInfo.y))
+				{
+					return true;
+				}
 			}
 		}
 	}
@@ -1918,13 +1939,23 @@ bool Inventory::pickupItem(const std::string& itemMatchText, const std::string& 
 	if (item == nullptr)
 		return false;
 
-	for (const auto& destSlotInfo : *destInv->getSlots())
+	if (destInv->getSlots()->size() == 0)
 	{
-		if ((destSlotInfo.x == destX && destSlotInfo.y == destY) || destX == -1)
+		if (tryPutInSlot(item, destInv, 0, 0))
 		{
-			if (tryPutInSlot(item, destInv, destSlotInfo.x, destSlotInfo.y))
+			return true;
+		}
+	}
+	else
+	{
+		for (const auto& destSlotInfo : *destInv->getSlots())
+		{
+			if ((destSlotInfo.x == destX && destSlotInfo.y == destY) || destX == -1)
 			{
-				return true;
+				if (tryPutInSlot(item, destInv, destSlotInfo.x, destSlotInfo.y))
+				{
+					return true;
+				}
 			}
 		}
 	}
@@ -2018,6 +2049,8 @@ BattleItem* Inventory::findItem(const std::string& itemMatchText, bool groundOnl
 		return nullptr;
 	std::string backupSearchString = _searchString;
 	_searchString = itemMatchText;
+	Unicode::upperCase(_searchString);
+	int shortestLength = 999999;
 
 	BattleItem* returnValue = nullptr;
 	for (const auto& invName : _game->getMod()->getInvsList())
@@ -2030,15 +2063,43 @@ BattleItem* Inventory::findItem(const std::string& itemMatchText, bool groundOnl
 		if (notGround && _inventorySlotGround == inv)
 			continue;
 
-		for (const auto& slot : *inv->getSlots())
+		bool exact;
+		int length;
+		if (inv->getSlots()->size() == 0)
 		{
-			BattleItem* item = _selUnit->getItem(inv, slot.x, slot.y);
+			BattleItem* item = _selUnit->getItem(inv, 0, 0);
 			if (item != nullptr)
 			{
-				if (isInSearchString(item))
+				if (searchStringMatchesLocalName(item, &exact, &length))
 				{
-					returnValue = item;
-					goto done;
+					if (exact || length < shortestLength)
+					{
+						shortestLength = length;
+						returnValue = item;
+					}
+					if (exact)
+						goto done;
+					
+				}
+			}
+		}
+		else
+		{
+			for (const auto& slot : *inv->getSlots())
+			{
+				BattleItem* item = _selUnit->getItem(inv, slot.x, slot.y);
+				if (item != nullptr)
+				{
+					if (searchStringMatchesLocalName(item, &exact, &length))
+					{
+						if (exact || length < shortestLength)
+						{
+							shortestLength = length;
+							returnValue = item;
+						}
+						if (exact)
+							goto done;
+					}
 				}
 			}
 		}
