@@ -909,162 +909,11 @@ void Inventory::mouseClick(Action *action, State *state)
 			RuleInventory *slot = getSlotInPosition(&x, &y);
 			if (slot != 0)
 			{
-				if (slot->getType() == INV_GROUND)
+				if (tryPutInSlot(_selItem, slot, x, y))
 				{
-					x += _groundOffset;
+					setSelectedItem(0);
 				}
-				BattleItem *item = _selUnit->getItem(slot, x, y);
-
-				bool canStack = slot->getType() == INV_GROUND && canBeStacked(item, _selItem);
-
-				// Check if this inventory section supports the item
-				if (!_selItem->getRules()->canBePlacedIntoInventorySection(slot))
-				{
-					_warning->showMessage(_game->getLanguage()->getString("STR_CANNOT_PLACE_ITEM_INTO_THIS_SECTION"));
-				}
-				// Put item in empty slot, or stack it, if possible.
-				else if (item == 0 || item == _selItem || canStack)
-				{
-					if (!overlapItems(_selUnit, _selItem, slot, x, y) && slot->fitItemInSlot(_selItem->getRules(), x, y))
-					{
-						if (!_tu || _selUnit->spendTimeUnits(_selItem->getMoveToCost(slot)))
-						{
-							moveItem(_selItem, slot, x, y);
-							if (slot->getType() == INV_GROUND)
-							{
-								_stackLevel[x][y] += 1;
-							}
-							setSelectedItem(0);
-							_game->getMod()->getSoundByDepth(_depth, Mod::ITEM_DROP)->play();
-						}
-						else
-						{
-							_warning->showMessage(_game->getLanguage()->getString("STR_NOT_ENOUGH_TIME_UNITS"));
-						}
-					}
-					else if (canStack)
-					{
-						if (!_tu || _selUnit->spendTimeUnits(_selItem->getMoveToCost(slot)))
-						{
-							moveItem(_selItem, slot, item->getSlotX(), item->getSlotY());
-							_stackLevel[item->getSlotX()][item->getSlotY()] += 1;
-							setSelectedItem(0);
-							_game->getMod()->getSoundByDepth(_depth, Mod::ITEM_DROP)->play();
-						}
-						else
-						{
-							_warning->showMessage(_game->getLanguage()->getString("STR_NOT_ENOUGH_TIME_UNITS"));
-						}
-					}
-				}
-				// Put item in weapon
-				else if (item->isWeaponWithAmmo())
-				{
-					int slotAmmo = item->getRules()->getSlotForAmmo(_selItem->getRules());
-					if (slotAmmo == -1)
-					{
-						_warning->showMessage(_game->getLanguage()->getString("STR_WRONG_AMMUNITION_FOR_THIS_WEAPON"));
-					}
-					else
-					{
-						// 4. the cost of loading the weapon with the new ammo (from the offhand)
-						int tuCost = item->getRules()->getTULoad(slotAmmo);
-
-						if (Mod::EXTENDED_ITEM_RELOAD_COST && _selItem->getSlot()->getType() != INV_HAND)
-						{
-							// 3. the cost of moving the new ammo from the current slot to the offhand
-							// Note: the cost for left/right hand might *NOT* be the same, but using the right hand "by definition"
-							tuCost += _selItem->getMoveToCost(_inventorySlotRightHand);
-						}
-
-						BattleItem *weaponRightHand = _selUnit->getRightHandWeapon();
-						BattleItem *weaponLeftHand = _selUnit->getLeftHandWeapon();
-
-						auto* oldAmmoGoesTo = _inventorySlotGround;
-						if (!weaponRightHand || _selItem == weaponRightHand)
-						{
-							oldAmmoGoesTo = _inventorySlotRightHand;
-						}
-						else if (!weaponLeftHand || _selItem == weaponLeftHand)
-						{
-							oldAmmoGoesTo = _inventorySlotLeftHand;
-						}
-
-						bool canLoad = true;
-						if (item->getAmmoForSlot(slotAmmo) != 0)
-						{
-							int tuUnload = item->getRules()->getTUUnload(slotAmmo);
-							if (_game->isShiftPressed() && (!_tu || tuUnload))
-							{
-								// Quick-swap check
-								if (!_tu)
-								{
-									// Outside of the battlescape, the old ammo always drops on the ground
-									oldAmmoGoesTo = _inventorySlotGround;
-								}
-								else
-								{
-									// During the battle, only weapons held in hand can use ammo quick-swap
-									if (item->getSlot()->getType() != INV_HAND)
-									{
-										canLoad = false;
-									}
-								}
-
-								// 1. the cost of unloading the old ammo (to the offhand)
-								tuCost += tuUnload;
-								if (oldAmmoGoesTo == _inventorySlotGround)
-								{
-									// 2. the cost of dropping the old ammo on the ground (from the offhand)
-									// Note: the cost for left/right hand is (should be) the same, so just using the right hand
-									tuCost += _inventorySlotRightHand->getCost(_inventorySlotGround);
-								}
-							}
-							else
-							{
-								canLoad = false;
-								_warning->showMessage(_game->getLanguage()->getString("STR_WEAPON_IS_ALREADY_LOADED"));
-							}
-						}
-						if (canLoad)
-						{
-							if (!_tu || _selUnit->spendTimeUnits(tuCost))
-							{
-								bool arrangeFloor = false;
-								auto* oldAmmo = item->setAmmoForSlot(slotAmmo, _selItem);
-								if (oldAmmo)
-								{
-									moveItem(oldAmmo, oldAmmoGoesTo, 0, 0);
-									if (oldAmmoGoesTo == _inventorySlotGround)
-									{
-										arrangeFloor = true;
-									}
-								}
-
-								int sound = _selItem->getRules()->getReloadSound();
-								if (sound == Mod::NO_SOUND)
-								{
-									sound = item->getRules()->getReloadSound();
-								}
-								if (sound == Mod::NO_SOUND)
-								{
-									sound = Mod::ITEM_RELOAD;
-								}
-
-								setSelectedItem(0);
-								_game->getMod()->getSoundByDepth(_depth, sound)->play();
-								if (arrangeFloor || item->getSlot()->getType() == INV_GROUND)
-								{
-									arrangeGround();
-								}
-							}
-							else
-							{
-								_warning->showMessage(_game->getLanguage()->getString("STR_NOT_ENOUGH_TIME_UNITS"));
-							}
-						}
-					}
-				}
+				
 				// else swap the item positions?
 			}
 			else
@@ -1115,38 +964,7 @@ void Inventory::mouseClick(Action *action, State *state)
 						BattleItem *item = _selUnit->getItem(slot, x, y);
 						if (item != 0)
 						{
-							const BattleFuseType fuseType = item->getRules()->getFuseTimerType();
-							if (fuseType != BFT_NONE)
-							{
-								if (item->getFuseTimer() == -1)
-								{
-									if (item->getRules()->getCostPrime().Time > 0)
-									{
-										// Prime that grenade!
-										if (fuseType == BFT_SET)
-										{
-											_game->pushState(new PrimeGrenadeState(0, true, item));
-										}
-										else
-										{
-											_warning->showMessage(_game->getLanguage()->getString(item->getRules()->getPrimeActionMessage()));
-											item->setFuseTimer(item->getRules()->getFuseTimerDefault());
-											arrangeGround();
-											playSound(item->getRules()->getPrimeSound()); // prime sound
-										}
-									}
-								}
-								else
-								{
-									if (item->getRules()->getCostUnprime().Time > 0 /* && !item->getRules()->getUnprimeActionName().empty() */ )
-									{
-										_warning->showMessage(_game->getLanguage()->getString(item->getRules()->getUnprimeActionMessage()));
-										item->setFuseTimer(-1);  // Unprime the grenade
-										arrangeGround();
-										playSound(item->getRules()->getUnprimeSound()); // unprime sound
-									}
-								}
-							}
+							rightClickItem(item);
 						}
 					}
 				}
@@ -1195,14 +1013,21 @@ void Inventory::mouseClick(Action *action, State *state)
  * Quickly drops the selected item on the ground.
  * @return The success of the item being dropped.
  */
-bool Inventory::quickDrop()
+bool Inventory::quickDrop(BattleItem * item)
 {
-	if (_selUnit && _selItem)
+	bool clearSelection = false;
+	if (item == nullptr)
 	{
-		if (!_tu || _selUnit->spendTimeUnits(_selItem->getMoveToCost(_inventorySlotGround)))
+		item = _selItem;
+		clearSelection = true;
+	}
+	if (_selUnit && item)
+	{
+		if (!_tu || _selUnit->spendTimeUnits(item->getMoveToCost(_inventorySlotGround)))
 		{
-			moveItem(_selItem, _inventorySlotGround, 0, 0);
-			setSelectedItem(0);
+			moveItem(item, _inventorySlotGround, 0, 0);
+			if (clearSelection)
+				setSelectedItem(0);
 			return true;
 		}
 		else
@@ -1222,10 +1047,14 @@ bool Inventory::quickDrop()
  * @param quickUnload Quick unload using specific rules (the rules are different in and outside of the battlescape)
  * @return The success of the weapon being unloaded.
  */
-bool Inventory::unload(bool quickUnload)
+bool Inventory::unload(bool quickUnload, BattleItem* itemToUnload)
 {
+	if (itemToUnload == nullptr)
+	{
+		itemToUnload = _selItem;
+	}
 	// Must be holding an item
-	if (_selItem == 0)
+	if (itemToUnload == nullptr)
 	{
 		// mobile support: https://openxcom.org/forum/index.php?topic=12880.0
 		if (Options::oxceInventoryUnloadFixedWeapons)
@@ -1238,9 +1067,9 @@ bool Inventory::unload(bool quickUnload)
 				if (!item->getRules()->isFixed()) continue;
 				if (!item->haveAnyAmmo()) continue;
 				{
-					_selItem = item; // don't worry, we'll unselect it later!
+					itemToUnload = item; // don't worry, we'll unselect it later!
 					bool success = unload(!_tu);
-					_selItem = 0; // see, I told you!
+					_selItem = nullptr; // see, I told you!
 					if (success) return true;
 				}
 			}
@@ -1249,7 +1078,7 @@ bool Inventory::unload(bool quickUnload)
 		return false;
 	}
 
-	const BattleType type = _selItem->getRules()->getBattleType();
+	const BattleType type = itemToUnload->getRules()->getBattleType();
 	const bool grenade = type == BT_GRENADE || type == BT_PROXIMITYGRENADE;
 	const bool weapon = type == BT_FIREARM || type == BT_MELEE;
 	int slotForAmmoUnload = -1;
@@ -1259,15 +1088,15 @@ bool Inventory::unload(bool quickUnload)
 	if (grenade)
 	{
 		// Item must be primed
-		if (_selItem->getFuseTimer() == -1)
+		if (itemToUnload->getFuseTimer() == -1)
 		{
 			return false;
 		}
-		if (_selItem->getRules()->getFuseTimerType() == BFT_NONE)
+		if (itemToUnload->getRules()->getFuseTimerType() == BFT_NONE)
 		{
 			return false;
 		}
-		if (_selItem->getRules()->getCostUnprime().Time == 0 /* || _selItem->getRules()->getUnprimeActionName().empty() */ )
+		if (itemToUnload->getRules()->getCostUnprime().Time == 0 /* || itemToUnload->getRules()->getUnprimeActionName().empty() */ )
 		{
 			return false;
 		}
@@ -1278,18 +1107,18 @@ bool Inventory::unload(bool quickUnload)
 		bool showError = false;
 		auto checkSlot = [&](int slot)
 		{
-			if (!_selItem->needsAmmoForSlot(slot))
+			if (!itemToUnload->needsAmmoForSlot(slot))
 			{
 				return false;
 			}
 
-			int tu = _selItem->getRules()->getTUUnload(slot);
+			int tu = itemToUnload->getRules()->getTUUnload(slot);
 			if (tu == 0 && !_tu)
 			{
 				return false;
 			}
 
-			auto* ammo = _selItem->getAmmoForSlot(slot);
+			auto* ammo = itemToUnload->getAmmoForSlot(slot);
 			if (ammo)
 			{
 				toForAmmoUnload = tu;
@@ -1335,14 +1164,14 @@ bool Inventory::unload(bool quickUnload)
 		// noop(); // 1. do not move the weapon at all!
 		if (grenade)
 		{
-			_selItem->setFuseTimer(-1);
-			_warning->showMessage(_game->getLanguage()->getString(_selItem->getRules()->getUnprimeActionMessage()));
-			playSound(_selItem->getRules()->getUnprimeSound()); // unprime sound
+			itemToUnload->setFuseTimer(-1);
+			_warning->showMessage(_game->getLanguage()->getString(itemToUnload->getRules()->getUnprimeActionMessage()));
+			playSound(itemToUnload->getRules()->getUnprimeSound()); // unprime sound
 			setSelectedItem(0);
 		}
 		else
 		{
-			auto* oldAmmo = _selItem->setAmmoForSlot(slotForAmmoUnload, nullptr);
+			auto* oldAmmo = itemToUnload->setAmmoForSlot(slotForAmmoUnload, nullptr);
 			moveItem(oldAmmo, _inventorySlotGround, 0, 0); // 2. + 3. always drop the ammo on the ground
 			setSelectedItem(0); // calling before arrangeGround() to prevent undesired drawing of TU costs
 			arrangeGround();
@@ -1356,7 +1185,7 @@ bool Inventory::unload(bool quickUnload)
 
 	for (auto* bi : *_selUnit->getInventory())
 	{
-		if (bi->getSlot()->getType() == INV_HAND && bi != _selItem)
+		if (bi->getSlot()->getType() == INV_HAND && bi != itemToUnload)
 		{
 			if (bi->getSlot() == SecondFreeHand)
 			{
@@ -1380,7 +1209,7 @@ bool Inventory::unload(bool quickUnload)
 		return false;
 	}
 
-	BattleActionCost cost { BA_NONE, _selUnit, _selItem };
+	BattleActionCost cost { BA_NONE, _selUnit, itemToUnload };
 	if (grenade)
 	{
 		cost.type = BA_UNPRIME;
@@ -1398,25 +1227,25 @@ bool Inventory::unload(bool quickUnload)
 		}
 	}
 
-	if (cost.haveTU() && _selItem->getSlot()->getType() != INV_HAND)
+	if (cost.haveTU() && itemToUnload->getSlot()->getType() != INV_HAND)
 	{
 		// 1. move the weapon to the first free hand
-		cost.Time += _selItem->getMoveToCost(FirstFreeHand);
+		cost.Time += itemToUnload->getMoveToCost(FirstFreeHand);
 	}
 
 	std::string err;
 	if (!_tu || cost.spendTU(&err))
 	{
-		moveItem(_selItem, FirstFreeHand, 0, 0); // 1.
+		moveItem(itemToUnload, FirstFreeHand, 0, 0); // 1.
 		if (grenade)
 		{
-			_selItem->setFuseTimer(-1);
-			_warning->showMessage(_game->getLanguage()->getString(_selItem->getRules()->getUnprimeActionMessage()));
-			playSound(_selItem->getRules()->getUnprimeSound()); // unprime sound
+			itemToUnload->setFuseTimer(-1);
+			_warning->showMessage(_game->getLanguage()->getString(itemToUnload->getRules()->getUnprimeActionMessage()));
+			playSound(itemToUnload->getRules()->getUnprimeSound()); // unprime sound
 		}
 		else
 		{
-			auto* oldAmmo = _selItem->setAmmoForSlot(slotForAmmoUnload, nullptr);
+			auto* oldAmmo = itemToUnload->setAmmoForSlot(slotForAmmoUnload, nullptr);
 			if (SecondFreeHand != nullptr)
 			{
 				moveItem(oldAmmo, SecondFreeHand, 0, 0); // 2.
@@ -1828,6 +1657,467 @@ void Inventory::playSound(int sound)
 	if (sound != Mod::NO_SOUND)
 	{
 		_game->getMod()->getSoundByDepth(_depth, sound)->play();
+	}
+}
+
+bool Inventory::tryPutInSlot(BattleItem* item, RuleInventory* slot, int x, int y)
+{
+	if (slot->getType() == INV_GROUND)
+	{
+		x += _groundOffset;
+	}
+	BattleItem* itemInDestination = _selUnit->getItem(slot, x, y);
+
+	bool canStack = slot->getType() == INV_GROUND && canBeStacked(itemInDestination, item);
+
+	// Check if this inventory section supports the item
+	if (!item->getRules()->canBePlacedIntoInventorySection(slot))
+	{
+		_warning->showMessage(_game->getLanguage()->getString("STR_CANNOT_PLACE_ITEM_INTO_THIS_SECTION"));
+		return false;
+	}
+	// Put item in empty slot, or stack it, if possible.
+	else if (itemInDestination == 0 || itemInDestination == item || canStack)
+	{
+		if (!overlapItems(_selUnit, item, slot, x, y) && slot->fitItemInSlot(item->getRules(), x, y))
+		{
+			if (!_tu || _selUnit->spendTimeUnits(item->getMoveToCost(slot)))
+			{
+				moveItem(item, slot, x, y);
+				if (slot->getType() == INV_GROUND)
+				{
+					_stackLevel[x][y] += 1;
+				}
+
+				_game->getMod()->getSoundByDepth(_depth, Mod::ITEM_DROP)->play();
+			}
+			else
+			{
+				_warning->showMessage(_game->getLanguage()->getString("STR_NOT_ENOUGH_TIME_UNITS"));
+				return false;
+			}
+		}
+		else if (canStack)
+		{
+			if (!_tu || _selUnit->spendTimeUnits(item->getMoveToCost(slot)))
+			{
+				moveItem(item, slot, itemInDestination->getSlotX(), itemInDestination->getSlotY());
+				_stackLevel[itemInDestination->getSlotX()][itemInDestination->getSlotY()] += 1;
+				_game->getMod()->getSoundByDepth(_depth, Mod::ITEM_DROP)->play();
+			}
+			else
+			{
+				_warning->showMessage(_game->getLanguage()->getString("STR_NOT_ENOUGH_TIME_UNITS"));
+				return false;
+			}
+		}
+	}
+	// Put item in weapon
+	else if (itemInDestination->isWeaponWithAmmo())
+	{
+		int slotAmmo = itemInDestination->getRules()->getSlotForAmmo(item->getRules());
+		if (slotAmmo == -1)
+		{
+			_warning->showMessage(_game->getLanguage()->getString("STR_WRONG_AMMUNITION_FOR_THIS_WEAPON"));
+			return false;
+		}
+		else
+		{
+			// 4. the cost of loading the weapon with the new ammo (from the offhand)
+			int tuCost = itemInDestination->getRules()->getTULoad(slotAmmo);
+
+			if (Mod::EXTENDED_ITEM_RELOAD_COST && item->getSlot()->getType() != INV_HAND)
+			{
+				// 3. the cost of moving the new ammo from the current slot to the offhand
+				// Note: the cost for left/right hand might *NOT* be the same, but using the right hand "by definition"
+				tuCost += item->getMoveToCost(_inventorySlotRightHand);
+			}
+
+			BattleItem* weaponRightHand = _selUnit->getRightHandWeapon();
+			BattleItem* weaponLeftHand = _selUnit->getLeftHandWeapon();
+
+			auto* oldAmmoGoesTo = _inventorySlotGround;
+			if (!weaponRightHand || item == weaponRightHand)
+			{
+				oldAmmoGoesTo = _inventorySlotRightHand;
+			}
+			else if (!weaponLeftHand || item == weaponLeftHand)
+			{
+				oldAmmoGoesTo = _inventorySlotLeftHand;
+			}
+
+			bool canLoad = true;
+			if (itemInDestination->getAmmoForSlot(slotAmmo) != 0)
+			{
+				int tuUnload = itemInDestination->getRules()->getTUUnload(slotAmmo);
+				if (_game->isShiftPressed() && (!_tu || tuUnload))
+				{
+					// Quick-swap check
+					if (!_tu)
+					{
+						// Outside of the battlescape, the old ammo always drops on the ground
+						oldAmmoGoesTo = _inventorySlotGround;
+					}
+					else
+					{
+						// During the battle, only weapons held in hand can use ammo quick-swap
+						if (itemInDestination->getSlot()->getType() != INV_HAND)
+						{
+							canLoad = false;
+						}
+					}
+
+					// 1. the cost of unloading the old ammo (to the offhand)
+					tuCost += tuUnload;
+					if (oldAmmoGoesTo == _inventorySlotGround)
+					{
+						// 2. the cost of dropping the old ammo on the ground (from the offhand)
+						// Note: the cost for left/right hand is (should be) the same, so just using the right hand
+						tuCost += _inventorySlotRightHand->getCost(_inventorySlotGround);
+					}
+				}
+				else
+				{
+					canLoad = false;
+					_warning->showMessage(_game->getLanguage()->getString("STR_WEAPON_IS_ALREADY_LOADED"));
+					return false;
+				}
+			}
+			if (canLoad)
+			{
+				if (!_tu || _selUnit->spendTimeUnits(tuCost))
+				{
+					bool arrangeFloor = false;
+					auto* oldAmmo = itemInDestination->setAmmoForSlot(slotAmmo, item);
+					if (oldAmmo)
+					{
+						moveItem(oldAmmo, oldAmmoGoesTo, 0, 0);
+						if (oldAmmoGoesTo == _inventorySlotGround)
+						{
+							arrangeFloor = true;
+						}
+					}
+
+					int sound = item->getRules()->getReloadSound();
+					if (sound == Mod::NO_SOUND)
+					{
+						sound = itemInDestination->getRules()->getReloadSound();
+					}
+					if (sound == Mod::NO_SOUND)
+					{
+						sound = Mod::ITEM_RELOAD;
+					}
+
+					_game->getMod()->getSoundByDepth(_depth, sound)->play();
+					if (arrangeFloor || itemInDestination->getSlot()->getType() == INV_GROUND)
+					{
+						arrangeGround();
+					}
+				}
+				else
+				{
+					_warning->showMessage(_game->getLanguage()->getString("STR_NOT_ENOUGH_TIME_UNITS"));
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+/// Attempts to move an item to another slot
+bool Inventory::moveItem(const std::string& sectionMatchTextSrc, int srcX, int srcY, const std::string& sectionMatchTextDest, int destX, int destY)
+{
+	if (_selUnit == nullptr)
+		return false;
+	RuleInventory* destInv = findSlot(sectionMatchTextDest);
+	RuleInventory* srcInv = nullptr;
+	BattleItem* item = findItem(sectionMatchTextSrc, &srcInv, &srcX, &srcY);
+	
+	if (srcInv == nullptr || destInv == nullptr || item == nullptr)
+		return false;
+	if (destInv->getSlots()->size() == 0)
+	{
+		if (tryPutInSlot(item, destInv, 0, 0))
+		{
+			return true;
+		}
+	}
+	else
+	{
+		for (const auto& destSlotInfo : *destInv->getSlots())
+		{
+			if ((destSlotInfo.x == destX && destSlotInfo.y == destY) || destX == -1)
+			{
+				if (tryPutInSlot(item, destInv, destSlotInfo.x, destSlotInfo.y))
+				{
+					return true;
+				}
+			}
+		}
+	}
+	
+	return false;
+}
+/// Attempts to move an item to another slot searching inventory by item name
+bool Inventory::moveItemByName(const std::string& itemMatchText, const std::string& sectionMatchTextDest, int destX, int destY)
+{
+	RuleInventory* srcSlot = nullptr;
+	int srcX, srcY;
+	BattleItem* item = findItem(itemMatchText, false, false, &srcSlot, &srcX, &srcY);
+	if (item == nullptr)
+		return false;
+	RuleInventory* destInv = findSlot(sectionMatchTextDest);
+	if (destInv == nullptr)
+		return false;
+	for (const auto& destSlotInfo : *destInv->getSlots())
+	{
+		if ((destSlotInfo.x == destX && destSlotInfo.y == destY) || destX == -1)
+		{
+			if (tryPutInSlot(item, destInv, destSlotInfo.x, destSlotInfo.y))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+
+}
+/// Attempts to drop an item from a slot
+bool Inventory::dropItem(const std::string& sectionMatchTextSrc, int srcX, int srcY)
+{
+	RuleInventory* srcInv = nullptr;
+	BattleItem* item = findItem(sectionMatchTextSrc, &srcInv, &srcX, &srcY);
+	
+	if (item != nullptr)
+	{
+		return quickDrop(item);
+	}
+	return false;
+}
+/// Attempts to drop an item with a given name
+bool Inventory::dropItem(const std::string& itemName)
+{
+	RuleInventory* slot = nullptr;
+	int x, y;
+	BattleItem* item = findItem(itemName, false, true, &slot, &x, &y);
+	if (item == nullptr)
+		return false;
+	return quickDrop(item);
+}
+/// Attempts to pick up an item from the ground by name and move it to a slot
+bool Inventory::pickupItem(const std::string& itemMatchText, const std::string& sectionMatchTextDest, int destX, int destY)
+{
+	RuleInventory* destInv = findSlot(sectionMatchTextDest);
+	if (destInv == nullptr)
+		return false;
+
+	RuleInventory* slot = nullptr;
+	int x, y;
+	BattleItem* item = findItem(itemMatchText, true, false, &slot, &x, &y);
+	if (item == nullptr)
+		return false;
+
+	for (const auto& destSlotInfo : *destInv->getSlots())
+	{
+		if ((destSlotInfo.x == destX && destSlotInfo.y == destY) || destX == -1)
+		{
+			if (tryPutInSlot(item, destInv, destSlotInfo.x, destSlotInfo.y))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/// Attempt to unload an item with the provided name
+bool Inventory::unloadItemName(const std::string& itemMatchText)
+{
+	RuleInventory* slot = nullptr;
+	int x, y;
+	BattleItem* item = findItem(itemMatchText, true, false, &slot, &x, &y);
+	if (item == nullptr)
+		return false;
+	return unload(false, item);
+
+}
+/// Attempt to unload an item in a slot
+bool Inventory::unloadItem(const std::string& sectionMatchText, int srcX, int srcY)
+{
+	RuleInventory* srcInv = nullptr;
+	BattleItem* item = findItem(sectionMatchText, &srcInv, &srcX, &srcY);
+	if (item == nullptr)
+		return false;
+	return unload(false, item);
+}
+
+
+/// Attempt to use an item (right or middle click behavior)
+bool Inventory::useItemName(const std::string& itemMatchText, int8_t button)
+{
+	RuleInventory* slot = nullptr;
+	int x, y;
+	BattleItem* item = findItem(itemMatchText, true, false, &slot, &x, &y);
+	if (item == nullptr)
+		return false;
+
+	if (button == 1)
+	{
+		rightClickItem(item);
+		return true;
+	}
+	else if (button == 2)
+	{
+		std::string articleId = item->getRules()->getUfopediaType();
+		Ufopaedia::openArticle(_game, articleId);
+	}
+	return false;
+}
+/// Attempt to use an item (right or middle click behavior)
+bool Inventory::useItem(const std::string& sectionMatchText, int srcX, int srcY, int8_t button)
+{
+	RuleInventory* srcInv = nullptr;
+	BattleItem* item = findItem(sectionMatchText, &srcInv, &srcX, &srcY);
+	if (item == nullptr)
+		return false;
+	if (button == 1)
+	{
+		rightClickItem(item);
+		return true;
+	}
+	else if (button == 2)
+	{
+		std::string articleId = item->getRules()->getUfopediaType();
+		Ufopaedia::openArticle(_game, articleId);
+	}
+	return false;
+}
+
+/// Finds a slot by name
+RuleInventory* Inventory::findSlot(const std::string& slotMatchText) const
+{
+	for (const auto& invName : _game->getMod()->getInvsList())
+	{
+		RuleInventory* inv = _game->getMod()->getInventory(invName);
+		std::string invString = _game->getLanguage()->getString(inv->getId());
+		if (slotMatchText.size() <= invString.size() && std::equal(slotMatchText.begin(), slotMatchText.end(), invString.begin(), [](auto a, auto b)
+			{ return std::tolower(a) == std::tolower(b); }))
+		{
+			return _game->getMod()->getInventory(invName);
+		}
+	}
+	return nullptr;
+}
+/// Finds an item by name
+BattleItem* Inventory::findItem(const std::string& itemMatchText, bool groundOnly, bool notGround, RuleInventory** outSlot, int* outX, int* outY)
+{
+	
+	if (_selUnit == nullptr)
+		return nullptr;
+	std::string backupSearchString = _searchString;
+	_searchString = itemMatchText;
+
+	BattleItem* returnValue = nullptr;
+	for (const auto& invName : _game->getMod()->getInvsList())
+	{
+		RuleInventory* inv = _game->getMod()->getInventory(invName);
+		if (inv == nullptr)
+			continue;
+		if (groundOnly && _inventorySlotGround != inv)
+			continue;
+		if (notGround && _inventorySlotGround == inv)
+			continue;
+
+		for (const auto& slot : *inv->getSlots())
+		{
+			BattleItem* item = _selUnit->getItem(inv, slot.x, slot.y);
+			if (item != nullptr)
+			{
+				if (isInSearchString(item))
+				{
+					returnValue = item;
+					goto done;
+				}
+			}
+		}
+	}
+done:
+	_searchString = backupSearchString;
+	return returnValue;
+}
+
+BattleItem* Inventory::findItem(const std::string& sectionMatchText, RuleInventory** outSlot, int* inOutX, int* inOutY)
+{
+	RuleInventory* srcInv = findSlot(sectionMatchText);
+	if (srcInv == nullptr)
+		return nullptr;
+	*outSlot = srcInv;
+	BattleItem* item = nullptr;
+	if (srcInv->getSlots()->size() == 0)
+	{
+		item = _selUnit->getItem(srcInv, 0, 0);
+		if (item != nullptr)
+		{
+			*inOutX = 0;
+			*inOutY = 0;
+			return item;
+		}
+	}
+	else
+	{
+		for (const auto& srcSlotInfo : *srcInv->getSlots())
+		{
+			if ((srcSlotInfo.x == *inOutX && srcSlotInfo.y == *inOutY) || *inOutX == -1)
+			{
+				item = _selUnit->getItem(srcInv, srcSlotInfo.x, srcSlotInfo.y);
+				if (item != nullptr)
+				{
+					*inOutX = srcSlotInfo.x;
+					*inOutY = srcSlotInfo.y;
+					return item;
+				}
+			}
+		}
+	}
+	
+	return item;
+}
+
+void Inventory::rightClickItem(BattleItem * item)
+{
+	const BattleFuseType fuseType = item->getRules()->getFuseTimerType();
+	if (fuseType != BFT_NONE)
+	{
+		if (item->getFuseTimer() == -1)
+		{
+			if (item->getRules()->getCostPrime().Time > 0)
+			{
+				// Prime that grenade!
+				if (fuseType == BFT_SET)
+				{
+					_game->pushState(new PrimeGrenadeState(0, true, item));
+				}
+				else
+				{
+					_warning->showMessage(_game->getLanguage()->getString(item->getRules()->getPrimeActionMessage()));
+					item->setFuseTimer(item->getRules()->getFuseTimerDefault());
+					arrangeGround();
+					playSound(item->getRules()->getPrimeSound()); // prime sound
+				}
+			}
+		}
+		else
+		{
+			if (item->getRules()->getCostUnprime().Time > 0 /* && !item->getRules()->getUnprimeActionName().empty() */)
+			{
+				_warning->showMessage(_game->getLanguage()->getString(item->getRules()->getUnprimeActionMessage()));
+				item->setFuseTimer(-1); // Unprime the grenade
+				arrangeGround();
+				playSound(item->getRules()->getUnprimeSound()); // unprime sound
+			}
+		}
 	}
 }
 

@@ -158,6 +158,8 @@ public:
 	void txtArmorTooltipIn(Action *action);
 	/// Handler for hiding armor tooltip.
 	void txtArmorTooltipOut(Action *action);
+	/// Get the inventory
+	Inventory* GetInventory() { return _inv; }
 
 private:
 	/// Update the visibility and icons for the template buttons.

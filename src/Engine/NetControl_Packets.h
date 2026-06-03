@@ -35,6 +35,12 @@ namespace NetControlPackets
 		GEOSCAPE_HIDE_CURSOR = 22,
 		GEOSCAPE_MOVE_CURSOR = 23,
 		GEOSCAPE_CLICK_CURSOR = 24,
+		EQUIP_MOVE_ITEM = 25,
+		EQUIP_MOVE_ITEM_NAME = 26,
+		EQUIP_DROP_ITEM = 27,
+		EQUIP_PICKUP_ITEM_NAME = 28,
+		EQUIP_UNLOAD_ITEM = 29,
+		EQUIP_USE_ITEM = 30, // right or middle click
 	};
 
 
@@ -315,6 +321,70 @@ struct NetControl_GeoscapeClickCursor : NetControl_PacketBase
 	int8_t button;
 	void _Execute(NetControl* nc, Game* game);
 };
+
+struct NetControl_EquipMoveItem : NetControl_PacketBase
+{
+  public:
+	char srcSectionName[32];
+	int srcX;
+	int srcY;
+	char destSectionName[32];
+	int destX;
+	int destY;
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_EquipMoveItemName : NetControl_PacketBase
+{
+  public:
+	char srcName[32];
+	char destSectionName[32];
+	int destX;
+	int destY;
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_DropItem : NetControl_PacketBase
+{
+  public:
+	char srcName[32];
+	int srcX;
+	int srcY;
+	int8_t isItemName;
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_PickupItemName : NetControl_PacketBase
+{
+  public:
+	char srcName[32];
+	char destSectionName[32];
+	int destX;
+	int destY;
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_UnloadItem : NetControl_PacketBase
+{
+  public:
+	char srcName[32];
+	int srcX;
+	int srcY;
+	int8_t srcIsItemName;
+
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_UseItem : NetControl_PacketBase
+{
+	char srcName[32];
+	int srcX;
+	int srcY;
+	int8_t srcIsItemName;
+	int8_t button;
+	void _Execute(NetControl* nc, Game* game);
+};
+
 
 #pragma pack(pop)
 }

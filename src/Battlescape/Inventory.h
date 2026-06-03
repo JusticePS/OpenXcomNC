@@ -71,7 +71,15 @@ private:
 	RuleInventory *getSlotInPosition(int *x, int *y) const;
 	/// Play a sound.
 	void playSound(int sound);
-public:
+	/// Finds a slot by name
+	RuleInventory *findSlot(const std::string& slotMatchText) const;
+	/// Finds an item by name
+	BattleItem* findItem(const std::string& itemMatchText, bool groundOnly, bool notGround, RuleInventory **outSlot, int * outX, int *outY);
+	/// Finds an item by section, X, Y
+	BattleItem* findItem(const std::string& sectionMatchText, RuleInventory** outSlot, int* inOutX, int* inOutY);
+	/// Processes a right click on the item
+	void rightClickItem(BattleItem* item);
+  public:
 	/// Creates a new inventory view at the specified position and size.
 	Inventory(Game *game, int width, int height, int x = 0, int y = 0, bool base = false);
 	/// Cleans up the inventory.
@@ -113,9 +121,9 @@ public:
 	/// Special handling for mouse clicks.
 	void mouseClick(Action *action, State *state) override;
 	/// Quickly drops the selected item on the ground.
-	bool quickDrop();
+	bool quickDrop(BattleItem* item = nullptr);
 	/// Unloads the selected weapon.
-	bool unload(bool quickUnload = false);
+	bool unload(bool quickUnload = false, BattleItem* itemToUnload = nullptr);
 	/// Checks whether the given item is visible with the current search string.
 	bool isInSearchString(BattleItem *item);
 	/// Arranges items on the ground.
@@ -132,6 +140,26 @@ public:
 	void animate();
 	/// Get current animation frame for inventory.
 	int getAnimFrame() const { return _animFrame; }
+	/// Code previously in mouseClick to fit an item in a slot, stack, or reload
+	bool tryPutInSlot(BattleItem* item, RuleInventory* slot, int x, int y);
+	/// Attempts to move an item to another slot
+	bool moveItem(const std::string& sectionMatchTextSrc, int srcX, int srcY, const std::string& sectionMatchTextDest, int destX, int destY);
+	/// Attempts to move an item to another slot searching ground and inventory by item name
+	bool moveItemByName(const std::string& itemMatchText, const std::string& sectionMatchTextDest, int destX, int destY);
+	/// Attempts to drop an item from a slot
+	bool dropItem(const std::string& sectionMatchTextSrc, int srcX, int srcY);
+	/// Attempts to drop an item with a given name
+	bool dropItem(const std::string& itemName);
+	/// Attempts to pick up an item from the ground by name and move it to a slot
+	bool pickupItem(const std::string& itemMatchText, const std::string& sectionMatchTextDest, int destX, int destY);
+	/// Attempt to unload an item with the provided name
+	bool unloadItemName(const std::string& itemMatchText);
+	/// Attempt to unload an item in a slot
+	bool unloadItem(const std::string& sectionMatchText, int srcX, int srcY);
+	/// Attempt to use an item (right or middle click behavior)
+	bool useItemName(const std::string& itemMatchText, int8_t button);
+	/// Attempt to use an item (right or middle click behavior)
+	bool useItem(const std::string& sectionMatchText, int srcX, int srcY, int8_t button);
 };
 
 }

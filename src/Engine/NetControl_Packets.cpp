@@ -18,6 +18,8 @@
 #include "../Battlescape/BattlescapeState.h"
 #include "../Battlescape/Map.h"
 #include "../Battlescape/Camera.h"
+#include "../Battlescape/InventoryState.h"
+#include "../Battlescape/Inventory.h"
 
 namespace OpenXcom
 {
@@ -143,6 +145,48 @@ namespace NetControlPackets
 					if (packetSize >= sizeof(NetControl_GeoscapeClickCursor))
 					{
 						NetControl_GeoscapeClickCursor* target = (NetControl_GeoscapeClickCursor*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::EQUIP_MOVE_ITEM:
+					if (packetSize >= sizeof(NetControl_EquipMoveItem))
+					{
+						NetControl_EquipMoveItem* target = (NetControl_EquipMoveItem*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::EQUIP_MOVE_ITEM_NAME:
+					if (packetSize >= sizeof(NetControl_EquipMoveItemName))
+					{
+						NetControl_EquipMoveItemName* target = (NetControl_EquipMoveItemName*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::EQUIP_DROP_ITEM:
+					if (packetSize >= sizeof(NetControl_DropItem))
+					{
+						NetControl_DropItem* target = (NetControl_DropItem*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::EQUIP_PICKUP_ITEM_NAME:
+					if (packetSize >= sizeof(NetControl_PickupItemName))
+					{
+						NetControl_PickupItemName* target = (NetControl_PickupItemName*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::EQUIP_UNLOAD_ITEM:
+					if (packetSize >= sizeof(NetControl_UnloadItem))
+					{
+						NetControl_UnloadItem* target = (NetControl_UnloadItem*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::EQUIP_USE_ITEM:
+					if (packetSize >= sizeof(NetControl_UseItem))
+					{
+						NetControl_UseItem* target = (NetControl_UseItem*)buffer;
 						target->_Execute(nc, game);
 					}
 					break;
@@ -659,6 +703,65 @@ namespace NetControlPackets
 			return;
 		}
 		game->getGeoscapeState()->clickNetCursor();
+	}
+
+	void NetControl_EquipMoveItem::_Execute(NetControl* nc, Game* game)
+	{
+		InventoryState* state = dynamic_cast<InventoryState*>(game->peekState());
+		if (state == nullptr || state->GetInventory() == nullptr)
+		{
+			return;
+		}
+		Inventory* inventory = state->GetInventory();
+		inventory->moveItem(srcSectionName, srcX, srcY, destSectionName, destX, destY);
+	}
+
+	void NetControl_EquipMoveItemName::_Execute(NetControl* nc, Game* game)
+	{
+		InventoryState* state = dynamic_cast<InventoryState*>(game->peekState());
+		if (state == nullptr || state->GetInventory() == nullptr)
+		{
+			return;
+		}
+		Inventory* inventory = state->GetInventory();
+		inventory->moveItemByName(srcName, destSectionName, destX, destY);
+	}
+
+	void NetControl_DropItem::_Execute(NetControl* nc, Game* game)
+	{
+		InventoryState* state = dynamic_cast<InventoryState*>(game->peekState());
+		if (state == nullptr || state->GetInventory() == nullptr)
+		{
+			return;
+		}
+		Inventory* inventory = state->GetInventory();
+		if (isItemName == 0)
+		{
+			inventory->dropItem(srcName, srcX, srcY);
+		}
+		else
+		{
+			inventory->dropItem(srcName);
+		}
+	}
+
+	void NetControl_PickupItemName::_Execute(NetControl* nc, Game* game)
+	{
+		InventoryState* state = dynamic_cast<InventoryState*>(game->peekState());
+		if (state == nullptr || state->GetInventory() == nullptr)
+		{
+			return;
+		}
+		Inventory* inventory = state->GetInventory();
+		inventory->pickupItem(srcName, destSectionName, destX, destY);
+	}
+
+	void NetControl_UnloadItem::_Execute(NetControl* nc, Game* game)
+	{
+	}
+
+	void NetControl_UseItem::_Execute(NetControl* nc, Game* game)
+	{
 	}
 
 	}
