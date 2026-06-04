@@ -758,10 +758,38 @@ namespace NetControlPackets
 
 	void NetControl_UnloadItem::_Execute(NetControl* nc, Game* game)
 	{
+		InventoryState* state = dynamic_cast<InventoryState*>(game->peekState());
+		if (state == nullptr || state->GetInventory() == nullptr)
+		{
+			return;
+		}
+		Inventory* inventory = state->GetInventory();
+		if (srcIsItemName == 0)
+		{
+			inventory->unloadItem(srcName, srcX, srcY);
+		}
+		else
+		{
+			inventory->unloadItemName(srcName);
+		}
 	}
 
 	void NetControl_UseItem::_Execute(NetControl* nc, Game* game)
 	{
+		InventoryState* state = dynamic_cast<InventoryState*>(game->peekState());
+		if (state == nullptr || state->GetInventory() == nullptr)
+		{
+			return;
+		}
+		Inventory* inventory = state->GetInventory();
+		if (srcIsItemName == 0)
+		{
+			inventory->useItem(srcName, srcX, srcY, button);
+		}
+		else
+		{
+			inventory->useItemName(srcName, button);
+		}
 	}
 
 	}

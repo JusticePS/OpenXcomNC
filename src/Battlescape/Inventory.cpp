@@ -1833,6 +1833,7 @@ bool Inventory::tryPutInSlot(BattleItem* item, RuleInventory* slot, int x, int y
 			}
 		}
 	}
+	drawItems();
 	return true;
 }
 
@@ -1912,7 +1913,9 @@ bool Inventory::dropItem(const std::string& sectionMatchTextSrc, int srcX, int s
 	
 	if (item != nullptr)
 	{
-		return quickDrop(item);
+		bool ret = quickDrop(item);
+		drawItems();
+		return ret;
 	}
 	return false;
 }
@@ -1924,7 +1927,9 @@ bool Inventory::dropItem(const std::string& itemName)
 	BattleItem* item = findItem(itemName, false, true, &slot, &x, &y);
 	if (item == nullptr)
 		return false;
-	return quickDrop(item);
+	bool ret =  quickDrop(item);
+	drawItems();
+	return ret;
 }
 /// Attempts to pick up an item from the ground by name and move it to a slot
 bool Inventory::pickupItem(const std::string& itemMatchText, const std::string& sectionMatchTextDest, int destX, int destY)
@@ -1970,6 +1975,8 @@ bool Inventory::unloadItemName(const std::string& itemMatchText)
 	int x, y;
 	BattleItem* item = findItem(itemMatchText, true, false, &slot, &x, &y);
 	if (item == nullptr)
+		item = findItem(itemMatchText, false, true, &slot, &x, &y);
+	if (item == nullptr)
 		return false;
 	return unload(false, item);
 
@@ -1991,6 +1998,8 @@ bool Inventory::useItemName(const std::string& itemMatchText, int8_t button)
 	RuleInventory* slot = nullptr;
 	int x, y;
 	BattleItem* item = findItem(itemMatchText, true, false, &slot, &x, &y);
+	if (item == nullptr)
+		item = findItem(itemMatchText, false, true, &slot, &x, &y);
 	if (item == nullptr)
 		return false;
 
@@ -2065,7 +2074,26 @@ BattleItem* Inventory::findItem(const std::string& itemMatchText, bool groundOnl
 
 		bool exact;
 		int length;
-		if (inv->getSlots()->size() == 0)
+		if (_inventorySlotGround == inv)
+		{
+			for (auto* item : *_selUnit->getTile()->getInventory())
+			{
+				if (item != nullptr)
+				{
+					if (searchStringMatchesLocalName(item, &exact, &length))
+					{
+						if (exact || length < shortestLength)
+						{
+							shortestLength = length;
+							returnValue = item;
+						}
+						if (exact)
+							goto done;
+					}
+				}
+			}
+		}
+		else if (inv->getSlots()->size() == 0)
 		{
 			BattleItem* item = _selUnit->getItem(inv, 0, 0);
 			if (item != nullptr)
@@ -2118,11 +2146,9 @@ BattleItem* Inventory::findItem(const std::string& sectionMatchText, RuleInvento
 	BattleItem* item = nullptr;
 	if (srcInv->getSlots()->size() == 0)
 	{
-		item = _selUnit->getItem(srcInv, 0, 0);
+		item = _selUnit->getItem(srcInv, *inOutX, *inOutY);
 		if (item != nullptr)
 		{
-			*inOutX = 0;
-			*inOutY = 0;
 			return item;
 		}
 	}
