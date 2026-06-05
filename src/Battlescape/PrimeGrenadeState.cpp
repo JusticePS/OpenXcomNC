@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <sstream>
+#include <charconv>
 #include "PrimeGrenadeState.h"
 #include "BattlescapeGame.h"
 #include "../Engine/Game.h"
@@ -165,7 +166,7 @@ void PrimeGrenadeState::btnClick(Action *action)
 	}
 
 	// got to find out which button was pressed
-	for (int i = 0; i < 24 && btnID == -1; ++i)
+	for (int i = 0; i < NUM_BUTTONS && btnID == -1; ++i)
 	{
 		if (action->getSender() == _button[i])
 		{
@@ -173,8 +174,14 @@ void PrimeGrenadeState::btnClick(Action *action)
 		}
 	}
 
+	btnClick(btnID);
+}
+
+void PrimeGrenadeState::btnClick(int btnID)
+{
 	if (btnID != -1)
 	{
+
 		if (_inInventoryView)
 		{
 			_grenadeInInventory->setFuseTimer(0 + btnID);
@@ -190,7 +197,18 @@ void PrimeGrenadeState::btnClick(Action *action)
 			_action->value = btnID;
 		}
 		_game->popState();
-		if (!_inInventoryView) _game->popState();
+		if (!_inInventoryView)
+			_game->popState();
+	}
+}
+
+void PrimeGrenadeState::pressSurfaceWithLabel(const std::string& labelText, int access_level)
+{
+	int value = -1;
+	auto ret = std::from_chars(labelText.data(), labelText.data() + labelText.size(), value);
+	if (value >= 0 && value < NUM_BUTTONS)
+	{
+		btnClick(value);
 	}
 }
 

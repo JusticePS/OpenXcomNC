@@ -40,10 +40,11 @@ private:
 	BattleAction *_action;
 	bool _inInventoryView;
 	BattleItem *_grenadeInInventory;
-	Text *_number[24];
+	const static int NUM_BUTTONS = 24;
+	Text* _number[NUM_BUTTONS];
 	Text *_title;
 	Frame *_frame;
-	InteractiveSurface *_button[24];
+	InteractiveSurface* _button[NUM_BUTTONS];
 	Surface *_bg;
 public:
 	/// Creates the Prime Grenade state.
@@ -54,6 +55,10 @@ public:
 	void handle(Action *action) override;
 	/// Handler for clicking a button.
 	void btnClick(Action *action);
+	/// Select matching number by string
+	void pressSurfaceWithLabel(const std::string& labelText, int access_level) override;
+	/// Handler for clicking a button
+	void btnClick(int btnId);
 };
 
 }
