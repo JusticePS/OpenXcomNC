@@ -93,6 +93,7 @@ public:
 	void edtBaseChange(Action *action);
 	/// Handler for pressing a base selection hotkey.
 	void handleKeyPress(Action *action);
+	void ToggleDrawNumbers();
 };
 
 }

@@ -94,6 +94,7 @@ PlaceFacilityState::PlaceFacilityState(Base *base, const RuleBaseFacility *rule,
 	_view->setBase(_base);
 	_view->setSelectable(rule->getSizeX(), rule->getSizeY());
 	_view->onMouseClick((ActionHandler)&PlaceFacilityState::viewClick);
+	_view->setDrawNumbers(true);
 
 	_btnCancel->setText(tr("STR_CANCEL"));
 	_btnCancel->onMouseClick((ActionHandler)&PlaceFacilityState::btnCancelClick);
@@ -193,202 +194,220 @@ void PlaceFacilityState::viewClick(Action *)
 	else
 	{
 		// Pre-calculate refunds
-		const BaseAreaSubset areaToBuildOverTemp = BaseAreaSubset(_rule->getSizeX(), _rule->getSizeY()).offset(_view->getGridX(), _view->getGridY());
-		int refundValueTemp = 0;
-		std::map<const std::string, int> refundItemsTemp;
+		SharedTryBuild(_view->getGridX(), _view->getGridY());
+	}
+}
+
+void PlaceFacilityState::ExternalPlace(int tileNum)
+{
+	SharedTryBuild(tileNum % BaseView::getBaseSize(), tileNum / BaseView::getBaseSize());
+}
+
+void PlaceFacilityState::SharedTryBuild(int x, int y)
+{
+	const BaseAreaSubset areaToBuildOverTemp = BaseAreaSubset(_rule->getSizeX(), _rule->getSizeY()).offset(x, y);
+	int refundValueTemp = 0;
+	std::map<const std::string, int> refundItemsTemp;
+	for (int i = _base->getFacilities()->size() - 1; i >= 0; --i)
+	{
+		BaseFacility* checkFacilityTemp = _base->getFacilities()->at(i);
+		if (BaseAreaSubset::intersection(areaToBuildOverTemp, checkFacilityTemp->getPlacement()))
+		{
+			const std::map<std::string, std::pair<int, int> >& itemCostTemp = checkFacilityTemp->getRules()->getBuildCostItems();
+			if (checkFacilityTemp->getBuildTime() > checkFacilityTemp->getRules()->getBuildTime())
+			{
+				refundValueTemp = checkFacilityTemp->getRules()->getBuildCost();
+				for (auto& itemTemp : itemCostTemp)
+					refundItemsTemp[itemTemp.first] += itemTemp.second.first;
+			}
+			else
+			{
+				refundValueTemp = checkFacilityTemp->getRules()->getRefundValue();
+				for (auto& itemTemp : itemCostTemp)
+					refundItemsTemp[itemTemp.first] += itemTemp.second.second;
+			}
+			if (checkFacilityTemp->getAmmo() > 0)
+				refundItemsTemp[checkFacilityTemp->getRules()->getAmmoItem()->getType()] += checkFacilityTemp->getAmmo();
+		}
+	}
+
+	_view->setGridPos(x, y);
+	// placing a brand new facility
+	BasePlacementErrors placementErrorCode = _view->getPlacementError(_rule);
+	if (placementErrorCode)
+	{
+		int errorColor1 = _game->getMod()->getInterface("placeFacility")->getElement("errorMessage")->color;
+		int errorColor2 = _game->getMod()->getInterface("placeFacility")->getElement("errorPalette")->color;
+		switch (placementErrorCode)
+		{
+		case BPE_Used_Stores:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_STORAGE"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_Used_Quarters:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_QUARTERS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_Used_Laboratories:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_LABORATORIES"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_Used_Workshops:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_WORKSHOPS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_Used_Hangars:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_HANGARS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_Used_PsiLabs:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_PSI_LABS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_Used_Gyms:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_GYMS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_Used_AlienContainment:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_PRISONS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_NotConnected:
+			_game->pushState(new ErrorMessageState(tr("STR_CANNOT_BUILD_HERE"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_Used:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_Upgrading:
+			_game->pushState(new ErrorMessageState(tr("STR_CANNOT_UPGRADE_FACILITY_ALREADY_UPGRADING"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_UpgradeSizeMismatch:
+			_game->pushState(new ErrorMessageState(tr("STR_CANNOT_UPGRADE_FACILITY_WRONG_SIZE"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_UpgradeRequireSpecific:
+			_game->pushState(new ErrorMessageState(tr("STR_CANNOT_UPGRADE_FACILITY_WRONG_TYPE"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_UpgradeDisallowed:
+			_game->pushState(new ErrorMessageState(tr("STR_CANNOT_UPGRADE_FACILITY_DISALLOWED"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_Queue:
+			_game->pushState(new ErrorMessageState(tr("STR_CANNOT_BUILD_QUEUE_OFF"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_ForbiddenByOther:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_FORBIDDEN_BY_OTHER"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_ForbiddenByThis:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_OTHER_FORBIDDEN_BY_THIS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		case BPE_UpgradeOnly:
+			_game->pushState(new ErrorMessageState(tr("STR_CANNOT_BUILD_UPGRADE_ONLY"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		default:
+			_game->pushState(new ErrorMessageState(tr("STR_CANNOT_BUILD_HERE"), _palette, errorColor1, "BACK01.SCR", errorColor2));
+			break;
+		}
+	}
+	else if (_game->getSavedGame()->getFunds() < (_rule->getBuildCost() - refundValueTemp))
+	{
+		_game->popState();
+		_game->pushState(new ErrorMessageState(tr("STR_NOT_ENOUGH_MONEY"), _palette, _game->getMod()->getInterface("placeFacility")->getElement("errorMessage")->color, "BACK01.SCR", _game->getMod()->getInterface("placeFacility")->getElement("errorPalette")->color));
+	}
+	else
+	{
+		for (const auto& item : _rule->getBuildCostItems())
+		{
+			int needed = (item.second.first - refundItemsTemp[item.first]) - _base->getStorageItems()->getItem(item.first);
+			if (needed > 0)
+			{
+				_game->popState();
+				_game->pushState(new ErrorMessageState(tr("STR_NOT_ENOUGH_ITEMS").arg(tr(item.first)).arg(needed), _palette, _game->getMod()->getInterface("placeFacility")->getElement("errorMessage")->color, "BACK01.SCR", _game->getMod()->getInterface("placeFacility")->getElement("errorPalette")->color));
+				return;
+			}
+		}
+		// Remove any facilities we're building over
+		double reducedBuildTime = 0.0;
+		bool buildingOver = false;
+		const BaseAreaSubset areaToBuildOver = BaseAreaSubset(_rule->getSizeX(), _rule->getSizeY()).offset(x, y);
 		for (int i = _base->getFacilities()->size() - 1; i >= 0; --i)
 		{
-			BaseFacility* checkFacilityTemp = _base->getFacilities()->at(i);
-			if (BaseAreaSubset::intersection(areaToBuildOverTemp, checkFacilityTemp->getPlacement()))
+			BaseFacility* checkFacility = _base->getFacilities()->at(i);
+			if (BaseAreaSubset::intersection(areaToBuildOver, checkFacility->getPlacement()))
 			{
-				const std::map<std::string, std::pair<int, int> >& itemCostTemp = checkFacilityTemp->getRules()->getBuildCostItems();
-				if (checkFacilityTemp->getBuildTime() > checkFacilityTemp->getRules()->getBuildTime())
+				// Get a refund from the facility we're building over
+				const std::map<std::string, std::pair<int, int> >& itemCost = checkFacility->getRules()->getBuildCostItems();
+
+				if (checkFacility->getBuildTime() > checkFacility->getRules()->getBuildTime())
 				{
-					refundValueTemp = checkFacilityTemp->getRules()->getBuildCost();
-					for (auto& itemTemp : itemCostTemp)
-						refundItemsTemp[itemTemp.first] += itemTemp.second.first;
+					// Give full refund if this is a (not yet started) queued build.
+					_game->getSavedGame()->setFunds(_game->getSavedGame()->getFunds() + checkFacility->getRules()->getBuildCost());
+					for (auto& item : itemCost)
+					{
+						_base->getStorageItems()->addItem(_game->getMod()->getItem(item.first, true), item.second.first);
+					}
 				}
 				else
 				{
-					refundValueTemp = checkFacilityTemp->getRules()->getRefundValue();
-					for (auto& itemTemp : itemCostTemp)
-						refundItemsTemp[itemTemp.first] += itemTemp.second.second;
+					// Give partial refund if this is a started build or a completed facility.
+					_game->getSavedGame()->setFunds(_game->getSavedGame()->getFunds() + checkFacility->getRules()->getRefundValue());
+					for (auto& item : itemCost)
+					{
+						_base->getStorageItems()->addItem(_game->getMod()->getItem(item.first, true), item.second.second);
+					}
+
+					// Reduce the build time of the new facility
+					double oldSizeSquared = (checkFacility->getRules()->getSizeX() * checkFacility->getRules()->getSizeY());
+					double newSizeSquared = (_rule->getSizeX() * _rule->getSizeY());
+					reducedBuildTime += (checkFacility->getRules()->getBuildTime() - checkFacility->getBuildTime()) * oldSizeSquared / newSizeSquared;
+
+					// This only counts as building over something if it wasn't in construction
+					if (checkFacility->getBuildTime() == 0)
+						buildingOver = true;
 				}
-				if (checkFacilityTemp->getAmmo() > 0)
-					refundItemsTemp[checkFacilityTemp->getRules()->getAmmoItem()->getType()] += checkFacilityTemp->getAmmo();
+				if (checkFacility->getAmmo() > 0)
+				{
+					// Full refund of loaded ammo
+					_base->getStorageItems()->addItem(checkFacility->getRules()->getAmmoItem(), checkFacility->getAmmo());
+					checkFacility->setAmmo(0);
+				}
+
+				// Remove the facility from the base
+				_base->getFacilities()->erase(_base->getFacilities()->begin() + i);
+				delete checkFacility;
 			}
 		}
 
-		// placing a brand new facility
-		BasePlacementErrors placementErrorCode = _view->getPlacementError(_rule);
-		if (placementErrorCode)
+		BaseFacility* fac = new BaseFacility(_rule, _base);
+		fac->setX(x);
+		fac->setY(y);
+		fac->setBuildTime(_rule->getBuildTime());
+		if (buildingOver)
 		{
-			int errorColor1 = _game->getMod()->getInterface("placeFacility")->getElement("errorMessage")->color;
-			int errorColor2 = _game->getMod()->getInterface("placeFacility")->getElement("errorPalette")->color;
-			switch (placementErrorCode)
-			{
-				case BPE_Used_Stores:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_STORAGE"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_Used_Quarters:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_QUARTERS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_Used_Laboratories:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_LABORATORIES"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_Used_Workshops:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_WORKSHOPS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_Used_Hangars:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_HANGARS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_Used_PsiLabs:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_PSI_LABS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_Used_Gyms:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_GYMS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_Used_AlienContainment:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_PRISONS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_NotConnected:
-					_game->pushState(new ErrorMessageState(tr("STR_CANNOT_BUILD_HERE"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_Used:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_Upgrading:
-					_game->pushState(new ErrorMessageState(tr("STR_CANNOT_UPGRADE_FACILITY_ALREADY_UPGRADING"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_UpgradeSizeMismatch:
-					_game->pushState(new ErrorMessageState(tr("STR_CANNOT_UPGRADE_FACILITY_WRONG_SIZE"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_UpgradeRequireSpecific:
-					_game->pushState(new ErrorMessageState(tr("STR_CANNOT_UPGRADE_FACILITY_WRONG_TYPE"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_UpgradeDisallowed:
-					_game->pushState(new ErrorMessageState(tr("STR_CANNOT_UPGRADE_FACILITY_DISALLOWED"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_Queue:
-					_game->pushState(new ErrorMessageState(tr("STR_CANNOT_BUILD_QUEUE_OFF"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_ForbiddenByOther:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_FORBIDDEN_BY_OTHER"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_ForbiddenByThis:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_OTHER_FORBIDDEN_BY_THIS"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-				case BPE_UpgradeOnly:
-					_game->pushState(new ErrorMessageState(tr("STR_CANNOT_BUILD_UPGRADE_ONLY"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				default:
-					_game->pushState(new ErrorMessageState(tr("STR_CANNOT_BUILD_HERE"), _palette, errorColor1, "BACK01.SCR", errorColor2));
-					break;
-			}
+			fac->setIfHadPreviousFacility(true);
+			reducedBuildTime = reducedBuildTime * _game->getMod()->getBuildTimeReductionScaling() / 100.0;
+			int reducedBuildTimeRounded = (int)std::round(reducedBuildTime);
+			fac->setBuildTime(std::max(1, fac->getBuildTime() - reducedBuildTimeRounded));
 		}
-		else if (_game->getSavedGame()->getFunds() < (_rule->getBuildCost() - refundValueTemp))
+		_base->getFacilities()->push_back(fac);
+		if (fac->getRules()->getPlaceSound() != Mod::NO_SOUND)
+		{
+			_game->getMod()->getSound("GEO.CAT", fac->getRules()->getPlaceSound())->play();
+		}
+		if (Options::allowBuildingQueue)
+		{
+			if (_view->isQueuedBuilding(_rule))
+				fac->setBuildTime(INT_MAX);
+			_view->reCalcQueuedBuildings();
+		}
+		_view->setBase(_base);
+		_game->getSavedGame()->setFunds(_game->getSavedGame()->getFunds() - _rule->getBuildCost());
+		for (const auto& item : _rule->getBuildCostItems())
+		{
+			_base->getStorageItems()->removeItem(item.first, item.second.first);
+		}
+		if (!_game->isShiftPressed())
 		{
 			_game->popState();
-			_game->pushState(new ErrorMessageState(tr("STR_NOT_ENOUGH_MONEY"), _palette, _game->getMod()->getInterface("placeFacility")->getElement("errorMessage")->color, "BACK01.SCR", _game->getMod()->getInterface("placeFacility")->getElement("errorPalette")->color));
-		}
-		else
-		{
-			for (const auto& item: _rule->getBuildCostItems())
-			{
-				int needed = (item.second.first - refundItemsTemp[item.first]) - _base->getStorageItems()->getItem(item.first);
-				if (needed > 0)
-				{
-					_game->popState();
-					_game->pushState(new ErrorMessageState(tr("STR_NOT_ENOUGH_ITEMS").arg(tr(item.first)).arg(needed), _palette, _game->getMod()->getInterface("placeFacility")->getElement("errorMessage")->color, "BACK01.SCR", _game->getMod()->getInterface("placeFacility")->getElement("errorPalette")->color));
-					return;
-				}
-			}
-			// Remove any facilities we're building over
-			double reducedBuildTime = 0.0;
-			bool buildingOver = false;
-			const BaseAreaSubset areaToBuildOver = BaseAreaSubset(_rule->getSizeX(), _rule->getSizeY()).offset(_view->getGridX(), _view->getGridY());
-			for (int i = _base->getFacilities()->size() - 1; i >= 0; --i)
-			{
-				BaseFacility *checkFacility = _base->getFacilities()->at(i);
-				if (BaseAreaSubset::intersection(areaToBuildOver, checkFacility->getPlacement()))
-				{
-					// Get a refund from the facility we're building over
-					const std::map<std::string, std::pair<int, int> > &itemCost = checkFacility->getRules()->getBuildCostItems();
-
-					if (checkFacility->getBuildTime() > checkFacility->getRules()->getBuildTime())
-					{
-						// Give full refund if this is a (not yet started) queued build.
-						_game->getSavedGame()->setFunds(_game->getSavedGame()->getFunds() + checkFacility->getRules()->getBuildCost());
-						for (auto& item : itemCost)
-						{
-							_base->getStorageItems()->addItem(_game->getMod()->getItem(item.first, true), item.second.first);
-						}
-					}
-					else
-					{
-						// Give partial refund if this is a started build or a completed facility.
-						_game->getSavedGame()->setFunds(_game->getSavedGame()->getFunds() + checkFacility->getRules()->getRefundValue());
-						for (auto& item : itemCost)
-						{
-							_base->getStorageItems()->addItem(_game->getMod()->getItem(item.first, true), item.second.second);
-						}
-
-						// Reduce the build time of the new facility
-						double oldSizeSquared = (checkFacility->getRules()->getSizeX() * checkFacility->getRules()->getSizeY());
-						double newSizeSquared = (_rule->getSizeX() * _rule->getSizeY());
-						reducedBuildTime += (checkFacility->getRules()->getBuildTime() - checkFacility->getBuildTime()) * oldSizeSquared / newSizeSquared;
-
-						// This only counts as building over something if it wasn't in construction
-						if (checkFacility->getBuildTime() == 0)
-							buildingOver = true;
-					}
-					if (checkFacility->getAmmo() > 0)
-					{
-						// Full refund of loaded ammo
-						_base->getStorageItems()->addItem(checkFacility->getRules()->getAmmoItem(), checkFacility->getAmmo());
-						checkFacility->setAmmo(0);
-					}
-
-					// Remove the facility from the base
-					_base->getFacilities()->erase(_base->getFacilities()->begin() + i);
-					delete checkFacility;
-				}
-
-			}
-
-			BaseFacility *fac = new BaseFacility(_rule, _base);
-			fac->setX(_view->getGridX());
-			fac->setY(_view->getGridY());
-			fac->setBuildTime(_rule->getBuildTime());
-			if (buildingOver)
-			{
-				fac->setIfHadPreviousFacility(true);
-				reducedBuildTime = reducedBuildTime * _game->getMod()->getBuildTimeReductionScaling() / 100.0;
-				int reducedBuildTimeRounded = (int)std::round(reducedBuildTime);
-				fac->setBuildTime(std::max(1, fac->getBuildTime() - reducedBuildTimeRounded));
-			}
-			_base->getFacilities()->push_back(fac);
-			if (fac->getRules()->getPlaceSound() != Mod::NO_SOUND)
-			{
-				_game->getMod()->getSound("GEO.CAT", fac->getRules()->getPlaceSound())->play();
-			}
-			if (Options::allowBuildingQueue)
-			{
-				if (_view->isQueuedBuilding(_rule)) fac->setBuildTime(INT_MAX);
-				_view->reCalcQueuedBuildings();
-			}
-			_view->setBase(_base);
-			_game->getSavedGame()->setFunds(_game->getSavedGame()->getFunds() - _rule->getBuildCost());
-			for (const auto& item: _rule->getBuildCostItems())
-			{
-				_base->getStorageItems()->removeItem(item.first, item.second.first);
-			}
-			if (!_game->isShiftPressed())
-			{
-				_game->popState();
-			}
 		}
 	}
 }
 
+void PlaceFacilityState::ToggleDrawNumbers()
+{
+	if (_view != nullptr)
+	{
+		_view->toggleDrawNumbers();
+	}
+}
 }

@@ -20,6 +20,9 @@
 #include "../Battlescape/Camera.h"
 #include "../Battlescape/InventoryState.h"
 #include "../Battlescape/Inventory.h"
+#include "../Basescape/PlaceFacilityState.h"
+#include "../Basescape/PlaceLiftState.h"
+#include "../Basescape/BasescapeState.h"
 
 namespace OpenXcom
 {
@@ -187,6 +190,20 @@ namespace NetControlPackets
 					if (packetSize >= sizeof(NetControl_UseItem))
 					{
 						NetControl_UseItem* target = (NetControl_UseItem*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::BASE_PLACE_FACILITY:
+					if (packetSize >= sizeof(NetControl_PlaceFacility))
+					{
+						NetControl_PlaceFacility* target = (NetControl_PlaceFacility*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::BASE_TOGGLE_NUMBERS:
+					if (packetSize >= sizeof(NetControl_BaseToggleNumbers))
+					{
+						NetControl_BaseToggleNumbers* target = (NetControl_BaseToggleNumbers*)buffer;
 						target->_Execute(nc, game);
 					}
 					break;
@@ -789,6 +806,56 @@ namespace NetControlPackets
 		else
 		{
 			inventory->useItemName(srcName, button);
+		}
+	}
+
+	void NetControl_PlaceFacility::_Execute(NetControl* nc, Game* game)
+	{
+		{
+			PlaceFacilityState* state = dynamic_cast<PlaceFacilityState*>(game->peekState());
+			if (state != nullptr)
+			{
+				state->ExternalPlace(tileNum);
+				return;
+			}
+		}
+		{
+			PlaceLiftState* state = dynamic_cast<PlaceLiftState*>(game->peekState());
+			if (state == nullptr)
+			{
+				return;
+			}
+			state->ExternalPlace(tileNum);
+			return;
+		}
+	}
+
+	void NetControl_BaseToggleNumbers::_Execute(NetControl* nc, Game* game)
+	{
+		{
+			PlaceFacilityState* state = dynamic_cast<PlaceFacilityState*>(game->peekState());
+			if (state != nullptr)
+			{
+				state->ToggleDrawNumbers();
+				return;
+			}
+		}
+		{
+			PlaceLiftState* state = dynamic_cast<PlaceLiftState*>(game->peekState());
+			if (state != nullptr)
+			{
+				state->ToggleDrawNumbers();
+				return;
+			}
+		}
+		{
+			BasescapeState* state = dynamic_cast<BasescapeState*>(game->peekState());
+			if (state != nullptr)
+			{
+				state->ToggleDrawNumbers();
+				return;
+			}
+			
 		}
 	}
 

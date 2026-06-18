@@ -57,6 +57,11 @@ public:
 	void viewClick(Action *action);
 	/// Handler for clicking the Access Lifts list.
 	void lstAccessLiftsClick(Action *action);
+	/// Handler for network message
+	void ExternalPlace(int tileNum);
+	void SharedTryPlace(int x, int y);
+	void ToggleDrawNumbers();
+	
 };
 
 }

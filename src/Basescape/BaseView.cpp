@@ -31,6 +31,7 @@
 #include "../Engine/Options.h"
 #include <climits>
 #include "../Mod/Texture.h"
+#include "../Interface/NumberText.h"
 
 namespace OpenXcom
 {
@@ -47,7 +48,7 @@ BaseView::BaseView(int width, int height, int x, int y) : InteractiveSurface(wid
 	_gridX(0), _gridY(0), _selSizeX(0), _selSizeY(0),
 	_selector(0), _blink(true),
 	_redColor(0), _yellowColor(0), _greenColor(0), _highContrast(true),
-	_cellColor(0), _selectorColor(0)
+	_cellColor(0), _selectorColor(0), _drawNumbers(false)
 {
 	// Clear grid
 	for (int i = 0; i < BASE_SIZE; ++i)
@@ -650,6 +651,28 @@ void BaseView::draw()
 			delete text;
 		}
 	}
+
+	if (_drawNumbers)
+	{
+		NumberText * _numWaypid = new NumberText(15, 15, 20, 30);
+		_numWaypid->setPalette(getPalette());
+		_numWaypid->setColor(_yellowColor);
+		_numWaypid->setBordered(true);
+
+		for (int x = 0; x < BASE_SIZE; ++x)
+		{
+			for (int y = 0; y < BASE_SIZE; ++y)
+			{
+				_numWaypid->setValue(x + y * BASE_SIZE);
+				_numWaypid->draw();
+				int fx = (x * GRID_SIZE) + 2;
+				int fy = (y * GRID_SIZE) + 2;
+				_numWaypid->blitNShade(this->getSurface(), fx, fy);
+			}
+		}
+
+		delete _numWaypid;
+	}
 }
 
 /**
@@ -733,6 +756,12 @@ void BaseView::setOtherColors(Uint8 red, Uint8 yellow, Uint8 green, bool highCon
 	_yellowColor = yellow;
 	_greenColor = green;
 	_highContrast = highContrast;
+}
+
+void BaseView::setDrawNumbers(bool drawNumbers)
+{
+	_drawNumbers = drawNumbers;
+	_redraw = true;
 }
 
 }

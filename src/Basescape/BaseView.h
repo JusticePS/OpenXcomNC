@@ -55,6 +55,7 @@ private:
 	Uint8 _redColor, _yellowColor, _greenColor;
 	bool _highContrast;
 	Uint8 _cellColor, _selectorColor;
+	bool _drawNumbers;
 	/// Updates the neighborFacility's build time. This is for internal use only (reCalcQueuedBuildings()).
 	void updateNeighborFacilityBuildTime(BaseFacility* facility, BaseFacility* neighbor);
 public:
@@ -100,6 +101,15 @@ public:
 	void setColor(Uint8 color) override;
 	void setSecondaryColor(Uint8 color) override;
 	void setOtherColors(Uint8 red, Uint8 yellow, Uint8 green, bool highContrast);
+	void setDrawNumbers(bool drawNumbers);
+	void toggleDrawNumbers() { setDrawNumbers(!_drawNumbers); }
+	void setGridPos(int x, int y)
+	{
+		_gridX = x;
+		_gridY = y;
+	}
+
+	static int getBaseSize() { return BASE_SIZE; }
 };
 
 }

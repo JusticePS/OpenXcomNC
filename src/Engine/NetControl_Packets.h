@@ -41,6 +41,8 @@ namespace NetControlPackets
 		EQUIP_PICKUP_ITEM_NAME = 28,
 		EQUIP_UNLOAD_ITEM = 29,
 		EQUIP_USE_ITEM = 30, // right or middle click
+		BASE_PLACE_FACILITY = 31,
+		BASE_TOGGLE_NUMBERS = 32,
 	};
 
 
@@ -382,6 +384,17 @@ struct NetControl_UseItem : NetControl_PacketBase
 	int srcY;
 	int8_t srcIsItemName;
 	int8_t button;
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_PlaceFacility : NetControl_PacketBase
+{
+	int8_t tileNum;
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_BaseToggleNumbers : NetControl_PacketBase
+{
 	void _Execute(NetControl* nc, Game* game);
 };
 

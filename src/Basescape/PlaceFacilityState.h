@@ -54,6 +54,11 @@ public:
 	void btnCancelClick(Action *action);
 	/// Handler for clicking the base view.
 	void viewClick(Action *action);
+	/// Handler for network message
+	void ExternalPlace(int tileNum);
+
+	void SharedTryBuild(int x, int y);
+	void ToggleDrawNumbers();
 };
 
 }

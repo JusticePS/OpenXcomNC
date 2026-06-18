@@ -676,6 +676,14 @@ void BasescapeState::handleKeyPress(Action *action)
 	}
 }
 
+void BasescapeState::ToggleDrawNumbers()
+{
+	if (_view != nullptr)
+	{
+		_view->toggleDrawNumbers();
+	}
+}
+
 /**
  * Changes the Base name.
  * @param action Pointer to an action.
