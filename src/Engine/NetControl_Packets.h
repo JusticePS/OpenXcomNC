@@ -43,6 +43,7 @@ namespace NetControlPackets
 		EQUIP_USE_ITEM = 30, // right or middle click
 		BASE_PLACE_FACILITY = 31,
 		BASE_TOGGLE_NUMBERS = 32,
+		BASE_CLICK_FACILITY = 33,
 	};
 
 
@@ -395,6 +396,13 @@ struct NetControl_PlaceFacility : NetControl_PacketBase
 
 struct NetControl_BaseToggleNumbers : NetControl_PacketBase
 {
+	void _Execute(NetControl* nc, Game* game);
+};
+
+struct NetControl_ClickFacility : NetControl_PacketBase
+{
+	int8_t tileNum;
+	int8_t mouseButton;
 	void _Execute(NetControl* nc, Game* game);
 };
 

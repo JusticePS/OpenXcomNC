@@ -109,6 +109,8 @@ public:
 		_gridY = y;
 	}
 
+
+	BaseFacility* getFacilityAt(int x, int y);
 	static int getBaseSize() { return BASE_SIZE; }
 };
 

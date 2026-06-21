@@ -207,6 +207,13 @@ namespace NetControlPackets
 						target->_Execute(nc, game);
 					}
 					break;
+				case NetControlPacketTypes::BASE_CLICK_FACILITY:
+					if (packetSize >= sizeof(NetControl_ClickFacility))
+					{
+						NetControl_ClickFacility* target = (NetControl_ClickFacility*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
 				}
 			}
 		}
@@ -856,6 +863,17 @@ namespace NetControlPackets
 				return;
 			}
 			
+		}
+	}
+
+	void NetControl_ClickFacility::_Execute(NetControl* nc, Game* game)
+	{
+		{
+			BasescapeState* state = dynamic_cast<BasescapeState*>(game->peekState());
+			if (state != nullptr)
+			{
+				state->externalClick(tileNum, mouseButton);
+			}
 		}
 	}
 

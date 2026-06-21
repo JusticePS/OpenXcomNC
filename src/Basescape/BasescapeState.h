@@ -29,6 +29,7 @@ class TextButton;
 class TextEdit;
 class Base;
 class Globe;
+class BaseFacility;
 
 /**
  * Basescape screen that shows a base's layout
@@ -44,7 +45,12 @@ private:
 	TextButton *_btnNewBase, *_btnBaseInfo, *_btnSoldiers, *_btnCrafts, *_btnFacilities, *_btnResearch, *_btnManufacture, *_btnTransfer, *_btnPurchase, *_btnSell, *_btnGeoscape;
 	Base *_base;
 	Globe *_globe;
-public:
+
+	void internalLeftClick(BaseFacility* fac);
+	void internalMiddleClick(BaseFacility* fac);
+	void internalRightClick(BaseFacility* fac);
+
+  public:
 	/// Creates the Basescape state.
 	BasescapeState(Base *base, Globe *globe);
 	/// Cleans up the Basescape state.
@@ -94,6 +100,8 @@ public:
 	/// Handler for pressing a base selection hotkey.
 	void handleKeyPress(Action *action);
 	void ToggleDrawNumbers();
+
+	void externalClick(int8_t tileNum, int8_t button);
 };
 
 }

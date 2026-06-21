@@ -387,103 +387,92 @@ void BasescapeState::btnGeoscapeClick(Action *)
 	_game->popState();
 }
 
-/**
- * Processes clicking on facilities.
- * @param action Pointer to an action.
- */
-void BasescapeState::viewLeftClick(Action *)
+void BasescapeState::internalLeftClick(BaseFacility* fac)
 {
-	BaseFacility *fac = _view->getSelectedFacility();
-	if (fac != 0)
+	if (fac == nullptr)
+		return;
+	if (fac->getRules()->isLift() && _base->getFacilities()->size() > 1)
 	{
-		if (_game->isCtrlPressed() && Options::isPasswordCorrect())
+		// Note: vehicles will not be deployed in the base preview
+		if (_base->getAvailableSoldiers(true, true) > 0 /* || !_base->getVehicles()->empty()*/)
 		{
-			// Ctrl + left click on a base facility allows moving it
-			_game->pushState(new PlaceFacilityState(_base, fac->getRules(), fac));
+			int texture, shade;
+			_globe->getPolygonTextureAndShade(_base->getLongitude(), _base->getLatitude(), &texture, &shade);
+			auto* globeTexture = _game->getMod()->getGlobe()->getTexture(texture);
+
+			SavedBattleGame* bgame = new SavedBattleGame(_game->getMod(), _game->getLanguage(), true);
+			_game->getSavedGame()->setBattleGame(bgame);
+			BattlescapeGenerator bgen = BattlescapeGenerator(_game);
+			bgame->setMissionType("STR_BASE_DEFENSE");
+			bgen.setBase(_base);
+			bgen.setWorldTexture(globeTexture, globeTexture);
+			bgen.run();
+
+			_game->pushState(new BriefingState(0, _base));
 		}
-		else
+		return;
+	}
+	int errorColor1 = _game->getMod()->getInterface("basescape")->getElement("errorMessage")->color;
+	int errorColor2 = _game->getMod()->getInterface("basescape")->getElement("errorPalette")->color;
+	// Is facility in use?
+	if (BasePlacementErrors placementErrorCode = fac->inUse())
+	{
+		switch (placementErrorCode)
 		{
-			if (fac->getRules()->isLift() && _base->getFacilities()->size() > 1)
-			{
-				// Note: vehicles will not be deployed in the base preview
-				if (_base->getAvailableSoldiers(true, true) > 0/* || !_base->getVehicles()->empty()*/)
-				{
-					int texture, shade;
-					_globe->getPolygonTextureAndShade(_base->getLongitude(), _base->getLatitude(), &texture, &shade);
-					auto* globeTexture = _game->getMod()->getGlobe()->getTexture(texture);
-
-					SavedBattleGame* bgame = new SavedBattleGame(_game->getMod(), _game->getLanguage(), true);
-					_game->getSavedGame()->setBattleGame(bgame);
-					BattlescapeGenerator bgen = BattlescapeGenerator(_game);
-					bgame->setMissionType("STR_BASE_DEFENSE");
-					bgen.setBase(_base);
-					bgen.setWorldTexture(globeTexture, globeTexture);
-					bgen.run();
-
-					_game->pushState(new BriefingState(0, _base));
-				}
-				return;
-			}
-			int errorColor1 = _game->getMod()->getInterface("basescape")->getElement("errorMessage")->color;
-			int errorColor2 = _game->getMod()->getInterface("basescape")->getElement("errorPalette")->color;
-			// Is facility in use?
-			if (BasePlacementErrors placementErrorCode = fac->inUse())
-			{
-				switch (placementErrorCode)
-				{
-				case BPE_Used_Stores:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_STORAGE"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_Used_Quarters:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_QUARTERS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_Used_Laboratories:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_LABORATORIES"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_Used_Workshops:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_WORKSHOPS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_Used_Hangars:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_HANGARS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_Used_PsiLabs:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_PSI_LABS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_Used_Gyms:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_GYMS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				case BPE_Used_AlienContainment:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_PRISONS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-					break;
-				default:
-					_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-				}
-			}
-			// Would base become disconnected?
-			else if (!_base->getDisconnectedFacilities(fac).empty() && fac->getRules()->getLeavesBehindOnSell().size() == 0)
-			{
-				_game->pushState(new ErrorMessageState(tr("STR_CANNOT_DISMANTLE_FACILITY"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-			}
-			// Is this facility being built from a dismantled one or building over a previous building?
-			else if (fac->getBuildTime() > 0 && fac->getIfHadPreviousFacility())
-			{
-				_game->pushState(new ErrorMessageState(tr("STR_CANNOT_DISMANTLE_FACILITY_UPGRADING"), _palette, errorColor1, "BACK13.SCR", errorColor2));
-			}
-			else
-			{
-				_game->pushState(new DismantleFacilityState(_base, _view, fac));
-			}
+		case BPE_Used_Stores:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_STORAGE"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_Used_Quarters:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_QUARTERS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_Used_Laboratories:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_LABORATORIES"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_Used_Workshops:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_WORKSHOPS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_Used_Hangars:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_HANGARS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_Used_PsiLabs:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_PSI_LABS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_Used_Gyms:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_GYMS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		case BPE_Used_AlienContainment:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE_PRISONS"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+			break;
+		default:
+			_game->pushState(new ErrorMessageState(tr("STR_FACILITY_IN_USE"), _palette, errorColor1, "BACK13.SCR", errorColor2));
 		}
+	}
+	// Would base become disconnected?
+	else if (!_base->getDisconnectedFacilities(fac).empty() && fac->getRules()->getLeavesBehindOnSell().size() == 0)
+	{
+		_game->pushState(new ErrorMessageState(tr("STR_CANNOT_DISMANTLE_FACILITY"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+	}
+	// Is this facility being built from a dismantled one or building over a previous building?
+	else if (fac->getBuildTime() > 0 && fac->getIfHadPreviousFacility())
+	{
+		_game->pushState(new ErrorMessageState(tr("STR_CANNOT_DISMANTLE_FACILITY_UPGRADING"), _palette, errorColor1, "BACK13.SCR", errorColor2));
+	}
+	else
+	{
+		_game->pushState(new DismantleFacilityState(_base, _view, fac));
 	}
 }
 
-/**
- * Processes right clicking on facilities.
- * @param action Pointer to an action.
- */
-void BasescapeState::viewRightClick(Action *)
+void BasescapeState::internalMiddleClick(BaseFacility* f)
 {
-	BaseFacility *f = _view->getSelectedFacility();
+	if (f == nullptr)
+		return;
+	std::string articleId = f->getRules()->getUfopediaType();
+	Ufopaedia::openArticle(_game, articleId);
+}
+
+void BasescapeState::internalRightClick(BaseFacility* f)
+{
 	if (f == 0)
 	{
 		_game->pushState(new BaseInfoState(_base, this));
@@ -492,14 +481,31 @@ void BasescapeState::viewRightClick(Action *)
 	{
 		switch (f->getRules()->getRightClickActionType())
 		{
-			case 1: _game->pushState(new ManageAlienContainmentState(_base, f->getRules()->getPrisonType(), OPT_GEOSCAPE)); break;
-			case 2: _game->pushState(new ManufactureState(_base)); break;
-			case 3: _game->pushState(new ResearchState(_base)); break;
-			case 4: _game->pushState(new AllocateTrainingState(_base)); break;
-			case 5: if (Options::anytimePsiTraining) _game->pushState(new AllocatePsiTrainingState(_base)); break;
-			case 6: _game->pushState(new SoldiersState(_base)); break;
-			case 7: _game->pushState(new SellState(_base, 0)); break;
-			default: _game->popState(); break;
+		case 1:
+			_game->pushState(new ManageAlienContainmentState(_base, f->getRules()->getPrisonType(), OPT_GEOSCAPE));
+			break;
+		case 2:
+			_game->pushState(new ManufactureState(_base));
+			break;
+		case 3:
+			_game->pushState(new ResearchState(_base));
+			break;
+		case 4:
+			_game->pushState(new AllocateTrainingState(_base));
+			break;
+		case 5:
+			if (Options::anytimePsiTraining)
+				_game->pushState(new AllocatePsiTrainingState(_base));
+			break;
+		case 6:
+			_game->pushState(new SoldiersState(_base));
+			break;
+		case 7:
+			_game->pushState(new SellState(_base, 0));
+			break;
+		default:
+			_game->popState();
+			break;
 		}
 	}
 	else if (f->getRules()->isMindShield())
@@ -562,6 +568,38 @@ void BasescapeState::viewRightClick(Action *)
 }
 
 /**
+ * Processes clicking on facilities.
+ * @param action Pointer to an action.
+ */
+void BasescapeState::viewLeftClick(Action *)
+{
+	BaseFacility *fac = _view->getSelectedFacility();
+	if (fac != 0)
+	{
+		if (_game->isCtrlPressed() && Options::isPasswordCorrect())
+		{
+			// Ctrl + left click on a base facility allows moving it
+			_game->pushState(new PlaceFacilityState(_base, fac->getRules(), fac));
+		}
+		else
+		{
+			internalLeftClick(fac);
+		}
+	}
+}
+
+/**
+ * Processes right clicking on facilities.
+ * @param action Pointer to an action.
+ */
+void BasescapeState::viewRightClick(Action *)
+{
+	BaseFacility *f = _view->getSelectedFacility();
+	internalRightClick(f);
+	
+}
+
+/**
 * Opens the corresponding Ufopaedia article.
 * @param action Pointer to an action.
 */
@@ -570,8 +608,7 @@ void BasescapeState::viewMiddleClick(Action *)
 	BaseFacility *f = _view->getSelectedFacility();
 	if (f)
 	{
-		std::string articleId = f->getRules()->getUfopediaType();
-		Ufopaedia::openArticle(_game, articleId);
+		internalMiddleClick(f);
 	}
 }
 
@@ -681,6 +718,27 @@ void BasescapeState::ToggleDrawNumbers()
 	if (_view != nullptr)
 	{
 		_view->toggleDrawNumbers();
+	}
+}
+
+void BasescapeState::externalClick(int8_t tileNum, int8_t mouseButton)
+{
+
+	int x = tileNum % BaseView::getBaseSize();
+	int y = tileNum / BaseView::getBaseSize();
+	BaseFacility* facility = _view->getFacilityAt(x, y);
+	switch (mouseButton)
+	{
+	case 0:
+	default:
+		internalLeftClick(facility);
+		break;
+	case 1:
+		internalRightClick(facility);
+		break;
+	case 2:
+		internalMiddleClick(facility);
+		break;
 	}
 }
 

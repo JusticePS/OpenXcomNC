@@ -44,11 +44,11 @@ namespace OpenXcom
  * @param y Y position in pixels.
  */
 BaseView::BaseView(int width, int height, int x, int y) : InteractiveSurface(width, height, x, y),
-	_base(0), _texture(0), _selFacility(0), _big(0), _small(0), _lang(0),
-	_gridX(0), _gridY(0), _selSizeX(0), _selSizeY(0),
-	_selector(0), _blink(true),
-	_redColor(0), _yellowColor(0), _greenColor(0), _highContrast(true),
-	_cellColor(0), _selectorColor(0), _drawNumbers(false)
+														  _base(0), _texture(0), _selFacility(0), _big(0), _small(0), _lang(0),
+														  _gridX(0), _gridY(0), _selSizeX(0), _selSizeY(0),
+														  _selector(0), _blink(true),
+														  _redColor(0), _yellowColor(0), _greenColor(0), _highContrast(true),
+														  _cellColor(0), _selectorColor(0), _drawNumbers(false)
 {
 	// Clear grid
 	for (int i = 0; i < BASE_SIZE; ++i)
@@ -82,7 +82,7 @@ BaseView::~BaseView()
  * @param small Pointer to small-size font.
  * @param lang Pointer to current language.
  */
-void BaseView::initText(Font *big, Font *small, Language *lang)
+void BaseView::initText(Font* big, Font* small, Language* lang)
 {
 	_big = big;
 	_small = small;
@@ -94,7 +94,7 @@ void BaseView::initText(Font *big, Font *small, Language *lang)
  * initializes the internal base grid.
  * @param base Pointer to base to display.
  */
-void BaseView::setBase(Base *base)
+void BaseView::setBase(Base* base)
 {
 	_base = base;
 	_selFacility = 0;
@@ -128,7 +128,7 @@ void BaseView::setBase(Base *base)
  * the various base elements.
  * @param texture Pointer to SurfaceSet to use.
  */
-void BaseView::setTexture(SurfaceSet *texture)
+void BaseView::setTexture(SurfaceSet* texture)
 {
 	_texture = texture;
 }
@@ -137,7 +137,7 @@ void BaseView::setTexture(SurfaceSet *texture)
  * Returns the facility the mouse is currently over.
  * @return Pointer to base facility (0 if none).
  */
-BaseFacility *BaseView::getSelectedFacility() const
+BaseFacility* BaseView::getSelectedFacility() const
 {
 	return _selFacility;
 }
@@ -150,7 +150,6 @@ void BaseView::resetSelectedFacility()
 	_facilities[_selFacility->getX()][_selFacility->getY()] = 0;
 	_selFacility = 0;
 }
-
 
 /**
  * Returns the X position of the grid square
@@ -219,7 +218,7 @@ void BaseView::setSelectable(int sizeX, int sizeY)
  * 6: trying to upgrade over existing facility, but ruleset disallows it
  * 7: trying to upgrade over existing facility, but all buildings next to it are under construction and build queue is off
  */
-BasePlacementErrors BaseView::getPlacementError(const RuleBaseFacility *rule, BaseFacility *facilityBeingMoved, bool isStartFacility) const
+BasePlacementErrors BaseView::getPlacementError(const RuleBaseFacility* rule, BaseFacility* facilityBeingMoved, bool isStartFacility) const
 {
 	// We'll need to know for the final check if we're upgrading an existing facility
 	bool buildingOverExisting = false;
@@ -306,7 +305,7 @@ BasePlacementErrors BaseView::getPlacementError(const RuleBaseFacility *rule, Ba
 		}
 	}
 
-	bool bq=Options::allowBuildingQueue;
+	bool bq = Options::allowBuildingQueue;
 	bool hasConnectingFacility = false;
 
 	// Check for another facility to connect to
@@ -357,7 +356,7 @@ BasePlacementErrors BaseView::getPlacementError(const RuleBaseFacility *rule, Ba
  * @param rule Facility type.
  * @return True if queued, False otherwise.
  */
-bool BaseView::isQueuedBuilding(const RuleBaseFacility *rule) const
+bool BaseView::isQueuedBuilding(const RuleBaseFacility* rule) const
 {
 	for (int i = 0; i < rule->getSizeX(); ++i)
 	{
@@ -409,19 +408,23 @@ void BaseView::reCalcQueuedBuildings()
 				min = it;
 			}
 		}
-		BaseFacility* facility=(*min);
+		BaseFacility* facility = (*min);
 		facilities.erase(min);
-		const RuleBaseFacility *rule=facility->getRules();
-		int x=facility->getX(), y=facility->getY();
+		const RuleBaseFacility* rule = facility->getRules();
+		int x = facility->getX(), y = facility->getY();
 		for (int i = 0; i < rule->getSizeX(); ++i)
 		{
-			if (y > 0) updateNeighborFacilityBuildTime(facility,_facilities[x + i][y - 1]);
-			if (y + rule->getSizeY() < BASE_SIZE) updateNeighborFacilityBuildTime(facility,_facilities[x + i][y + rule->getSizeY()]);
+			if (y > 0)
+				updateNeighborFacilityBuildTime(facility, _facilities[x + i][y - 1]);
+			if (y + rule->getSizeY() < BASE_SIZE)
+				updateNeighborFacilityBuildTime(facility, _facilities[x + i][y + rule->getSizeY()]);
 		}
 		for (int i = 0; i < rule->getSizeY(); ++i)
 		{
-			if (x > 0) updateNeighborFacilityBuildTime(facility, _facilities[x - 1][y + i]);
-			if (x + rule->getSizeX() < BASE_SIZE) updateNeighborFacilityBuildTime(facility, _facilities[x + rule->getSizeX()][y + i]);
+			if (x > 0)
+				updateNeighborFacilityBuildTime(facility, _facilities[x - 1][y + i]);
+			if (x + rule->getSizeX() < BASE_SIZE)
+				updateNeighborFacilityBuildTime(facility, _facilities[x + rule->getSizeX()][y + i]);
 		}
 	}
 }
@@ -433,9 +436,7 @@ void BaseView::reCalcQueuedBuildings()
  */
 void BaseView::updateNeighborFacilityBuildTime(BaseFacility* facility, BaseFacility* neighbor)
 {
-	if (facility != 0 && neighbor != 0
-	&& neighbor->getAdjustedBuildTime() > neighbor->getRules()->getBuildTime()
-	&& facility->getAdjustedBuildTime() + neighbor->getRules()->getBuildTime() < neighbor->getAdjustedBuildTime())
+	if (facility != 0 && neighbor != 0 && neighbor->getAdjustedBuildTime() > neighbor->getRules()->getBuildTime() && facility->getAdjustedBuildTime() + neighbor->getRules()->getBuildTime() < neighbor->getAdjustedBuildTime())
 		neighbor->setBuildTime(facility->getAdjustedBuildTime() + neighbor->getRules()->getBuildTime());
 }
 
@@ -494,7 +495,7 @@ void BaseView::draw()
 	{
 		for (int y = 0; y < BASE_SIZE; ++y)
 		{
-			Surface *frame = _texture->getFrame(_base->getGlobeTexture() ? _base->getGlobeTexture()->getBaseGridSprite() : 0);
+			Surface* frame = _texture->getFrame(_base->getGlobeTexture() ? _base->getGlobeTexture()->getBaseGridSprite() : 0);
 			int fx = (x * GRID_SIZE);
 			int fy = (y * GRID_SIZE);
 			frame->blitNShade(this, fx, fy);
@@ -511,7 +512,7 @@ void BaseView::draw()
 		{
 			for (int x = fac->getX(); x < fac->getX() + fac->getRules()->getSizeX(); ++x)
 			{
-				Surface *frame;
+				Surface* frame;
 
 				int outline = fac->getRules()->isSmall() ? 3 : fac->getRules()->getSizeX() * fac->getRules()->getSizeY();
 				if (fac->getBuildTime() == 0)
@@ -541,7 +542,7 @@ void BaseView::draw()
 				{
 					if (_facilities[x][y] != 0 && _facilities[x][y]->isBuiltOrHadPreviousFacility() && !_facilities[x][y]->getRules()->connectorsDisabled())
 					{
-						Surface *frame = _texture->getFrame(7);
+						Surface* frame = _texture->getFrame(7);
 						int fx = (x * GRID_SIZE - GRID_SIZE / 2);
 						int fy = (y * GRID_SIZE);
 						frame->blitNShade(this, fx, fy);
@@ -557,7 +558,7 @@ void BaseView::draw()
 				{
 					if (_facilities[subX][y] != 0 && _facilities[subX][y]->isBuiltOrHadPreviousFacility() && !_facilities[subX][y]->getRules()->connectorsDisabled())
 					{
-						Surface *frame = _texture->getFrame(8);
+						Surface* frame = _texture->getFrame(8);
 						int fx = (subX * GRID_SIZE);
 						int fy = (y * GRID_SIZE - GRID_SIZE / 2);
 						frame->blitNShade(this, fx, fy);
@@ -578,7 +579,7 @@ void BaseView::draw()
 			{
 				if (fac->getRules()->getSpriteEnabled())
 				{
-					Surface *frame = _texture->getFrame(fac->getRules()->getSpriteFacility() + num);
+					Surface* frame = _texture->getFrame(fac->getRules()->getSpriteFacility() + num);
 					int fx = (x * GRID_SIZE);
 					int fy = (y * GRID_SIZE);
 					frame->blitNShade(this, fx, fy);
@@ -596,7 +597,7 @@ void BaseView::draw()
 			{
 				if ((*craftIt)->getStatus() != "STR_OUT")
 				{
-					Surface *frame = _texture->getFrame((*craftIt)->getSkinSprite() + 33);
+					Surface* frame = _texture->getFrame((*craftIt)->getSkinSprite() + 33);
 					int fx = (fac->getX() * GRID_SIZE + (fac->getRules()->getSizeX() - 1) * GRID_SIZE / 2 + 2);
 					int fy = (fac->getY() * GRID_SIZE + (fac->getRules()->getSizeY() - 1) * GRID_SIZE / 2 - 4);
 					frame->blitNShade(this, fx, fy);
@@ -609,7 +610,7 @@ void BaseView::draw()
 		// Draw time remaining
 		if (fac->getBuildTime() > 0 || fac->getDisabled())
 		{
-			Text *text = new Text(GRID_SIZE * fac->getRules()->getSizeX(), 16, 0, 0);
+			Text* text = new Text(GRID_SIZE * fac->getRules()->getSizeX(), 16, 0, 0);
 			text->setPalette(getPalette());
 			text->initText(_big, _small, _lang);
 			text->setX(fac->getX() * GRID_SIZE);
@@ -654,7 +655,7 @@ void BaseView::draw()
 
 	if (_drawNumbers)
 	{
-		NumberText * _numWaypid = new NumberText(15, 15, 20, 30);
+		NumberText* _numWaypid = new NumberText(15, 15, 20, 30);
 		_numWaypid->setPalette(getPalette());
 		_numWaypid->setColor(_yellowColor);
 		_numWaypid->setBordered(true);
@@ -679,7 +680,7 @@ void BaseView::draw()
  * Blits the base view and selector.
  * @param surface Pointer to surface to blit onto.
  */
-void BaseView::blit(SDL_Surface *surface)
+void BaseView::blit(SDL_Surface* surface)
 {
 	Surface::blit(surface);
 	if (_selector != 0)
@@ -693,7 +694,7 @@ void BaseView::blit(SDL_Surface *surface)
  * @param action Pointer to an action.
  * @param state State that the action handlers belong to.
  */
-void BaseView::mouseOver(Action *action, State *state)
+void BaseView::mouseOver(Action* action, State* state)
 {
 	_gridX = (int)floor(action->getRelativeXMouse() / (GRID_SIZE * action->getXScale()));
 	_gridY = (int)floor(action->getRelativeYMouse() / (GRID_SIZE * action->getYScale()));
@@ -731,7 +732,7 @@ void BaseView::mouseOver(Action *action, State *state)
  * @param action Pointer to an action.
  * @param state State that the action handlers belong to.
  */
-void BaseView::mouseOut(Action *action, State *state)
+void BaseView::mouseOut(Action* action, State* state)
 {
 	_selFacility = 0;
 	if (_selSizeX > 0 && _selSizeY > 0)
@@ -764,4 +765,12 @@ void BaseView::setDrawNumbers(bool drawNumbers)
 	_redraw = true;
 }
 
+BaseFacility* BaseView::getFacilityAt(int x, int y)
+{
+	if (x >= 0 && x < BASE_SIZE && y >= 0 && y < BASE_SIZE)
+	{
+		return _facilities[x][y];
+	}
+	return nullptr;
+}
 }
