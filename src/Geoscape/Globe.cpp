@@ -848,6 +848,85 @@ std::vector<Target*> Globe::getTargets(int x, int y, bool craft, Craft *currentC
 	return v;
 }
 
+std::vector<Target*> Globe::getTargets(const std::string& targetName, bool craft, Craft* currentCraft) const
+{
+	std::vector<Target*> v;
+	for (auto* wp : *_game->getSavedGame()->getWaypoints())
+	{
+		auto name = wp->getName(_game->getLanguage());
+		if (targetName.size() <= name.size() && std::equal(targetName.begin(), targetName.end(), name.begin(), [](auto a, auto b)
+														   { return std::tolower(a) == std::tolower(b); }))
+		{
+			v.push_back(wp);
+		}
+	}
+
+	for (auto* ufo : *_game->getSavedGame()->getUfos())
+	{
+		if (!ufo->getDetected() || ufo->getStatus() == Ufo::IGNORE_ME)
+			continue;
+		{
+			auto name = ufo->getName(_game->getLanguage());
+			if (targetName.size() <= name.size() && std::equal(targetName.begin(), targetName.end(), name.begin(), [](auto a, auto b)
+															   { return std::tolower(a) == std::tolower(b); }))
+			{
+				v.push_back(ufo);
+			}
+		}
+	}
+	for (auto* mission : *_game->getSavedGame()->getMissionSites())
+	{
+		auto name = mission->getName(_game->getLanguage());
+		if (targetName.size() <= name.size() && std::equal(targetName.begin(), targetName.end(), name.begin(), [](auto a, auto b)
+														   { return std::tolower(a) == std::tolower(b); }))
+		{
+			v.push_back(mission);
+		}
+	}
+
+	for (auto* ab : *_game->getSavedGame()->getAlienBases())
+	{
+		if (ab->isDiscovered())
+		{
+			auto name = ab->getName(_game->getLanguage());
+			if (targetName.size() <= name.size() && std::equal(targetName.begin(), targetName.end(), name.begin(), [](auto a, auto b)
+															   { return std::tolower(a) == std::tolower(b); }))
+			{
+				v.push_back(ab);
+			}
+		}
+	}
+
+	for (auto* xbase : *_game->getSavedGame()->getBases())
+	{
+		if (xbase->getLongitude() == 0.0 && xbase->getLatitude() == 0.0)
+			continue;
+
+		auto basename = xbase->getName(_game->getLanguage());
+		if (targetName.size() <= basename.size() && std::equal(targetName.begin(), targetName.end(), basename.begin(), [](auto a, auto b)
+														   { return std::tolower(a) == std::tolower(b); }))
+		{
+			v.push_back(xbase);
+		}
+
+		for (auto* xcraft : *xbase->getCrafts())
+		{
+			if (xcraft == currentCraft)
+				continue;
+			if (xcraft->getLongitude() == xbase->getLongitude() && xcraft->getLatitude() == xbase->getLatitude() && xcraft->getDestination() == 0)
+				continue;
+
+			auto name = xcraft->getName(_game->getLanguage());
+			if (targetName.size() <= name.size() && std::equal(targetName.begin(), targetName.end(), name.begin(), [](auto a, auto b)
+															   { return std::tolower(a) == std::tolower(b); }))
+			{
+				v.push_back(xcraft);
+			}
+		}
+	}
+	return v;
+}
+
 /**
  * Takes care of pre-calculating all the polygons currently visible
  * on the globe and caching them so they only need to be recalculated

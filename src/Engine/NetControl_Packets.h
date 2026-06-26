@@ -44,6 +44,7 @@ namespace NetControlPackets
 		BASE_PLACE_FACILITY = 31,
 		BASE_TOGGLE_NUMBERS = 32,
 		BASE_CLICK_FACILITY = 33,
+		GEOSCAPE_TARGET = 34,
 	};
 
 
@@ -406,6 +407,11 @@ struct NetControl_ClickFacility : NetControl_PacketBase
 	void _Execute(NetControl* nc, Game* game);
 };
 
+struct NetControl_GeoscapeTarget : NetControl_PacketBase
+{
+	char targetName[32];
+	void _Execute(NetControl* nc, Game* game);
+};
 
 #pragma pack(pop)
 }

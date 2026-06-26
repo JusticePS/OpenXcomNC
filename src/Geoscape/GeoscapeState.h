@@ -211,6 +211,8 @@ public:
 	void moveNetCursor(int dx, int dy);
 	/// Clicks the cursor
 	void clickNetCursor();
+	void externalTarget(const std::string& targetName);
+	void pressSurfaceWithLabel(const std::string& labelText, int access_level) override;
 
   private:
 	bool attemptAlienRaceEvolution(int month, AlienBase* ab) const;

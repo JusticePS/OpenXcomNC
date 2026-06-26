@@ -23,6 +23,7 @@
 #include "../Basescape/PlaceFacilityState.h"
 #include "../Basescape/PlaceLiftState.h"
 #include "../Basescape/BasescapeState.h"
+#include "../Geoscape/SelectDestinationState.h"
 
 namespace OpenXcom
 {
@@ -211,6 +212,13 @@ namespace NetControlPackets
 					if (packetSize >= sizeof(NetControl_ClickFacility))
 					{
 						NetControl_ClickFacility* target = (NetControl_ClickFacility*)buffer;
+						target->_Execute(nc, game);
+					}
+					break;
+				case NetControlPacketTypes::GEOSCAPE_TARGET:
+					if (packetSize >= sizeof(NetControl_GeoscapeTarget))
+					{
+						NetControl_GeoscapeTarget* target = (NetControl_GeoscapeTarget*)buffer;
 						target->_Execute(nc, game);
 					}
 					break;
@@ -873,6 +881,27 @@ namespace NetControlPackets
 			if (state != nullptr)
 			{
 				state->externalClick(tileNum, mouseButton);
+			}
+		}
+	}
+
+	void NetControl_GeoscapeTarget::_Execute(NetControl* nc, Game* game)
+	{
+		{
+			GeoscapeState* state = dynamic_cast<GeoscapeState*>(game->peekState());
+			if (state != nullptr)
+			{
+				std::string str = targetName;
+				state->externalTarget(targetName);
+				return;
+			}
+		}
+		{
+			SelectDestinationState* state = dynamic_cast<SelectDestinationState*>(game->peekState());
+			if (state != nullptr)
+			{
+				std::string str = targetName;
+				state->externalTarget(targetName);
 			}
 		}
 	}

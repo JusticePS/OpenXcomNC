@@ -161,6 +161,8 @@ public:
 	void toggleDetail();
 	/// Gets all the targets near a point on the globe.
 	std::vector<Target*> getTargets(int x, int y, bool craft, Craft *currentCraft) const;
+	/// Gets all the targets using name search
+	std::vector<Target*> getTargets(const std::string & targetName, bool craft, Craft* currentCraft) const;
 	/// Caches visible globe polygons.
 	void cachePolygons();
 	/// Sets the palette of the globe.

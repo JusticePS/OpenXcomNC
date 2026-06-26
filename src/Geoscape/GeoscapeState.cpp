@@ -5143,4 +5143,51 @@ void GeoscapeState::clickNetCursor()
 	
 }
 
+void GeoscapeState::externalTarget(const std::string& targetName)
+{
+	std::vector<Target*> v = _globe->getTargets(targetName, false, nullptr);
+	
+	if (v.size() > 0)
+	{
+		std::vector<Craft*> crafts;
+		_game->pushState(new MultipleTargetsState(v, crafts, this, true));
+	}
+}
+
+void GeoscapeState::pressSurfaceWithLabel(const std::string& labelText, int access_level)
+{
+	
+	for (auto* df : _dogfights)
+	{
+		if (df->isMinimized())
+			continue;
+		df->pressSurfaceWithLabel(labelText, access_level);
+	}
+	State::pressSurfaceWithLabel(labelText, access_level);
+	if (labelText.size() > 0 && labelText[0] >= '1' && labelText[0] <= '9')
+	{
+		int index = (labelText[0] - '1') + 1;
+		for (auto* df : _dogfights)
+		{
+			if (df->getCraft() == nullptr)
+				continue;
+			if (df->getCraft()->getInterceptionOrder() == index)
+			{
+				if (df->isMinimized())
+				{
+					df->setMinimized(false);
+				}
+				if (labelText.size() > 1)
+				{
+					std::string remainingLabel = labelText.substr(1);
+					df->pressSurfaceWithLabel(remainingLabel, access_level);
+				}
+			}
+
+
+			
+		}
+	}
+}
+
 }

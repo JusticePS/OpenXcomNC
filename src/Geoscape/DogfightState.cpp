@@ -362,6 +362,15 @@ DogfightState::DogfightState(GeoscapeState *state, Craft *craft, Ufo *ufo, bool 
 	_btnMinimizedIcon = new InteractiveSurface(32, 20, _minimizedIconX, _minimizedIconY);
 	_txtInterceptionNumber = new Text(16, 9, _minimizedIconX + 18, _minimizedIconY + 6);
 
+	_btnMinimize->setTooltip("MINIMIZE");
+	_btnStandoff->setTooltip("STANDOFF");
+	_btnCautious->setTooltip("CAUTIOUS ATTACK");
+	_btnStandard->setTooltip("STANDARD ATTACK");
+	_btnAggressive->setTooltip("AGGRESSIVE ATTACK");
+	_btnDisengage->setTooltip("DISENGAGE");
+	_btnUfo->setTooltip("UFO");
+
+
 	_mode = (_ufoIsAttacking || _missileCraft) ? _btnAggressive : _btnStandoff;
 	_craftDamageAnimTimer = new Timer(500);
 

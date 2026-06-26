@@ -86,6 +86,8 @@ public:
 	void btnCydoniaClick(Action *action);
 	/// Let the state know the window has been resized.
 	void resize(int &dX, int &dY) override;
+	void externalTarget(const std::string& targetName);
+
 
 };
 

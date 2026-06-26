@@ -384,4 +384,14 @@ void SelectDestinationState::resize(int &dX, int &dY)
 	}
 }
 
+void SelectDestinationState::externalTarget(const std::string& targetName)
+{
+	std::vector<Target*> v = _globe->getTargets(targetName, true, _crafts.front());
+
+	if (v.size() > 0)
+	{
+		_game->pushState(new MultipleTargetsState(v, _crafts, nullptr, true));
+	}
+}
+
 }
