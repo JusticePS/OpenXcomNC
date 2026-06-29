@@ -368,7 +368,7 @@ DogfightState::DogfightState(GeoscapeState *state, Craft *craft, Ufo *ufo, bool 
 	_btnStandard->setTooltip("STANDARD ATTACK");
 	_btnAggressive->setTooltip("AGGRESSIVE ATTACK");
 	_btnDisengage->setTooltip("DISENGAGE");
-	_btnUfo->setTooltip("UFO");
+	_btnUfo->setTooltip("VIEWUFO");
 
 
 	_mode = (_ufoIsAttacking || _missileCraft) ? _btnAggressive : _btnStandoff;

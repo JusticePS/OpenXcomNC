@@ -776,4 +776,9 @@ void UnitInfoState::exitClick(Action *)
 	_game->popState();
 }
 
+void UnitInfoState::pressSurfaceWithLabel(const std::string& labelText, int access_level)
+{
+	exitClick(nullptr);
+}
+
 }

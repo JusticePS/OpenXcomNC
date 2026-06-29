@@ -75,6 +75,7 @@ public:
 	void btnNextClick(Action *action);
 	/// Handler for exiting the state.
 	void exitClick(Action *action);
+	void pressSurfaceWithLabel(const std::string& labelText, int access_level) override;
 };
 
 }

@@ -66,6 +66,11 @@ MiniMapState::MiniMapState (Camera * camera, SavedBattleGame * battleGame)
 	add(_btnOk, "buttonOK", "minimap", _bg);
 	add(_txtLevel, "textLevel", "minimap", _bg);
 
+	_btnLvlUp->setTooltip("up");
+	_btnLvlDwn->setTooltip("down");
+	_btnOk->setTooltip("ok");
+
+
 	centerAllSurfaces();
 
 	if (_game->getScreen()->getDY() > 50)
