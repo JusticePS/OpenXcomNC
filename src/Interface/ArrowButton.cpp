@@ -32,10 +32,11 @@ namespace OpenXcom
  * @param x X position in pixels.
  * @param y Y position in pixels.
  */
-ArrowButton::ArrowButton(ArrowShape shape, int width, int height, int x, int y) : ImageButton(width, height, x, y), _shape(shape), _list(0)
+ArrowButton::ArrowButton(ArrowShape shape, int width, int height, int x, int y, int remoteNumber) : ImageButton(width, height, x, y), _shape(shape), _list(0)
 {
 	_timer = new Timer(50);
 	_timer->onTimer((SurfaceHandler)&ArrowButton::scroll);
+	_remoteNumber = remoteNumber;
 }
 
 /**
@@ -396,32 +397,109 @@ bool ArrowButton::pressIfLabelMatches(int access_level, const std::string& textL
 		break;
 
 	}
+	int before_plus_or_minus_chars = textLabel.size();
+	int remoteNumber = 0;
+	size_t space_index = textLabel.find_first_of(' ');
+	auto back_iterator = textLabel.end();
+	if (space_index > 0 && space_index < textLabel.size())
+	{
+		std::string endNumSubstring = textLabel.substr(space_index + 1);
+		remoteNumber = std::stoi(endNumSubstring);
+		if (remoteNumber != _remoteNumber)
+			return false;
+		before_plus_or_minus_chars = space_index;
+		for (int i = space_index; i < textLabel.size(); ++i)
+		{
+			back_iterator--;
+		}
+	}
+	else
+	{
+		space_index = -1;
+	}
 
-	if (textLabel.size() <= arrow_text.size() && std::equal(textLabel.begin(), textLabel.end(), arrow_text.begin(), [](auto a, auto b)
+	size_t plus_index = textLabel.find('+');
+	size_t minus_index = textLabel.find('-');
+	std::string num_substr;
+	int num_presses = 1;
+	
+	
+	if ((plus_index >= 1 && plus_index != -1) || (minus_index >= 1 && minus_index != -1))
+	{
+		if (plus_index >= 1 && plus_index != -1)
+		{
+			before_plus_or_minus_chars = plus_index;
+			if (space_index > 0)
+			{
+				num_substr = textLabel.substr(plus_index + 1, space_index - (plus_index + 1));
+			}
+			else
+			{
+				num_substr = textLabel.substr(plus_index + 1);
+			}
+			back_iterator = textLabel.end();
+			for (int i = plus_index; i < textLabel.size(); ++i)
+			{
+				back_iterator--;
+			}
+		}
+		else
+		{
+			before_plus_or_minus_chars = minus_index;
+			if (space_index > 0)
+			{
+				num_substr = textLabel.substr(minus_index + 1, space_index - (minus_index + 1));
+			}
+			else
+			{
+				num_substr = textLabel.substr(minus_index + 1);
+			}
+			back_iterator = textLabel.end();
+			for (int i = minus_index; i < textLabel.size(); ++i)
+			{
+				back_iterator--;
+			}
+		}
+		num_presses = std::stoi(num_substr);
+	}
+	else
+	{
+		plus_index = minus_index = -1;
+	}
+
+	if (num_presses > 500)
+		num_presses = 500;
+	if (num_presses < 1)
+		num_presses = 1;
+
+	if (before_plus_or_minus_chars <= arrow_text.size() && std::equal(textLabel.begin(), back_iterator, arrow_text.begin(), [](auto a, auto b)
 															{ return std::tolower(a) == std::tolower(b); }))
 	{
+		for (int i = 0; i < num_presses; ++i)
 		{
-			SDL_Event simEv;
-			simEv.type = SDL_MOUSEBUTTONDOWN;
-			simEv.button.button = SDL_BUTTON_LEFT;
-			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
-			mousePress(&a, state);
-		}
+			{
+				SDL_Event simEv;
+				simEv.type = SDL_MOUSEBUTTONDOWN;
+				simEv.button.button = SDL_BUTTON_LEFT;
+				Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+				mousePress(&a, state);
+			}
 
-		{
-			SDL_Event simEv;
-			simEv.type = SDL_MOUSEBUTTONUP;
-			simEv.button.button = SDL_BUTTON_LEFT;
-			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
-			mouseRelease(&a, state);
-		}
+			{
+				SDL_Event simEv;
+				simEv.type = SDL_MOUSEBUTTONUP;
+				simEv.button.button = SDL_BUTTON_LEFT;
+				Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+				mouseRelease(&a, state);
+			}
 
-		{
-			SDL_Event simEv;
-			simEv.type = SDL_MOUSEBUTTONUP;
-			simEv.button.button = SDL_BUTTON_LEFT;
-			Action a = Action(&simEv, 0.0, 0.0, 0, 0);
-			mouseClick(&a, state);
+			{
+				SDL_Event simEv;
+				simEv.type = SDL_MOUSEBUTTONUP;
+				simEv.button.button = SDL_BUTTON_LEFT;
+				Action a = Action(&simEv, 0.0, 0.0, 0, 0);
+				mouseClick(&a, state);
+			}
 		}
 		return true;
 	}

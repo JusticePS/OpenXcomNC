@@ -89,12 +89,12 @@ void ManufactureInfoState::buildUi()
 	_txtEngineerDown = new Text(90, 9, 40, 138);
 	_txtUnitUp = new Text(90, 9, 192, 118);
 	_txtUnitDown = new Text(90, 9, 192, 138);
-	_btnEngineerUp = new ArrowButton(ARROW_BIG_UP, 13, 14, 132, 114);
-	_btnEngineerDown = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 132, 136);
-	_btnUnitInfinity = new ArrowButton(ARROW_BIG_UP, 13, 14, 300, 114);
-	_btnUnitMinimum = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 300, 136);
-	_btnUnitUp = new ArrowButton(ARROW_BIG_UP, 13, 14, 284, 114);
-	_btnUnitDown = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 284, 136);
+	_btnEngineerUp = new ArrowButton(ARROW_BIG_UP, 13, 14, 132, 114, 1);
+	_btnEngineerDown = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 132, 136, 1);
+	_btnUnitInfinity = new ArrowButton(ARROW_BIG_UP, 13, 14, 300, 114, 3);
+	_btnUnitMinimum = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 300, 136, 3);
+	_btnUnitUp = new ArrowButton(ARROW_BIG_UP, 13, 14, 284, 114, 2);
+	_btnUnitDown = new ArrowButton(ARROW_BIG_DOWN, 13, 14, 284, 136, 2);
 	_txtAllocated = new Text(40, 16, 128, 88);
 	_txtTodo = new Text(40, 16, 280, 88);
 
